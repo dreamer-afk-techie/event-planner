@@ -28,7 +28,7 @@ jobs:
       - name: Upload Event Planner
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dance-party-app/public
+          path: public
 
       - name: Deploy to GitHub Pages
         id: deployment
