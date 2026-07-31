@@ -1,0 +1,25 @@
+{
+  "event": {
+    "name": "Dhoti Ceremony",
+    "eventDate": "2026-08-16",
+    "practiceGoalPerPerson": 6,
+    "finalized": false,
+    "finalizedAt": null
+  },
+  "performances": [
+    {
+      "id": "51TwTJQPhIltS_Pw",
+      "title": "Sharara-Durandar",
+      "danceStyle": "Bollywood classical fusion",
+      "instagramUrl": "https://www.instagram.com/reel/DZRo5B7SxF9/?igsh=bGJhOWU3YmV3ZnN1",
+      "addedBy": "Karuna",
+      "notes": "",
+      "votes": [],
+      "finalized": false,
+      "createdAt": "2026-07-31T03:43:19.246484+00:00"
+    }
+  ],
+  "practiceLogs": [],
+  "createdAt": "2026-07-30T00:00:00+00:00",
+  "updatedAt": "2026-07-31T03:43:19.246535+00:00"
+}

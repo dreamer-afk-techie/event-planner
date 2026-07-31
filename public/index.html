@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="app-nav" aria-label="Event planner navigation">
+        <button id="homeButton" class="brand-button" type="button" aria-label="Go to events">
+          <span class="brand-mark">EP</span>
+        </button>
+        <div class="nav-copy">
+          <p class="eyebrow">Performance planner</p>
+          <h1 id="eventName">Event Planner</h1>
+        </div>
+        <div class="tabs hidden" id="plannerTabs" role="group" aria-label="View filter">
+          <button class="tab active" type="button" data-view="all">Feed</button>
+          <button class="tab" type="button" data-view="finalized">Final</button>
+          <button class="tab" type="button" data-view="practice">Practice</button>
+        </div>
+      </nav>
+
+      <section id="homeView" class="home-view">
+        <section class="home-hero">
+          <div>
+            <p class="eyebrow">Event hub</p>
+            <h2>Bring everyone together before the big moment.</h2>
+            <p>Create an event, share performance ideas, vote as a group, and keep practice moving together.</p>
+          </div>
+          <form id="createEventForm" class="quick-create">
+            <label>
+              Event name
+              <input name="name" maxlength="80" placeholder="Family Sangeet, Diwali Night..." required autocomplete="off" />
+            </label>
+            <label>
+              Event date
+              <input name="eventDate" type="date" />
+            </label>
+            <label>
+              Practice goal
+              <input name="practiceGoalPerPerson" type="number" min="1" max="100" value="5" />
+            </label>
+            <button type="submit">Create Event</button>
+          </form>
+        </section>
+
+        <section class="event-section">
+          <div class="section-heading">
+            <div>
+              <h2>Events</h2>
+              <p>Choose an event to manage its performance links and practice check-ins.</p>
+            </div>
+            <span id="statusText" class="status">Ready</span>
+          </div>
+          <div id="eventCards" class="event-grid"></div>
+        </section>
+      </section>
+
+      <section id="plannerView" class="planner-view hidden">
+        <section class="hero-band">
+          <button id="backButton" class="ghost-button" type="button">Events</button>
+          <div>
+            <h2 id="plannerTitle">Performance Links</h2>
+            <p id="eventMeta" class="meta-line">Select an event to start planning.</p>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Event summary">
+          <article>
+            <span>Entries</span>
+            <strong id="entryCount">0</strong>
+            <em>Performance links</em>
+          </article>
+          <article>
+            <span>Finalized</span>
+            <strong id="finalizedCount">0</strong>
+            <em>Program picks</em>
+          </article>
+          <article>
+            <span>Votes</span>
+            <strong id="voteCount">0</strong>
+            <em>Group input</em>
+          </article>
+          <article>
+            <span>Home Practice</span>
+            <strong id="practiceCount">0</strong>
+            <em>People checked in</em>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <aside class="side-panel">
+            <form id="performanceForm" class="form-block composer">
+              <div class="form-heading">
+                <span class="mini-avatar">+</span>
+                <div>
+                  <h2>Add Performance</h2>
+                  <p>Post a reference for the group to vote on.</p>
+                </div>
+              </div>
+              <label>
+                Performance title
+                <input name="title" maxlength="100" required autocomplete="off" />
+              </label>
+              <label>
+                Dance style
+                <select name="danceStyle" required>
+                  <option value="">Choose style</option>
+                  <option>Bharatanatyam</option>
+                  <option>Kathak</option>
+                  <option>Kuchipudi</option>
+                  <option>Garba / Dandiya</option>
+                  <option>Bhangra</option>
+                  <option>Folk fusion</option>
+                  <option>Bollywood classical fusion</option>
+                  <option>Group medley</option>
+                </select>
+              </label>
+              <label>
+                Instagram link
+                <input name="instagramUrl" type="url" placeholder="https://www.instagram.com/reel/..." required />
+              </label>
+              <label>
+                Added by
+                <input name="addedBy" maxlength="60" required autocomplete="name" />
+              </label>
+              <label>
+                Notes
+                <textarea name="notes" maxlength="500" rows="4"></textarea>
+              </label>
+              <button type="submit">Post Link</button>
+            </form>
+
+            <details class="form-block settings-card">
+              <summary>Event Settings</summary>
+              <form id="eventForm" class="settings-form">
+                <label>
+                  Event name
+                  <input id="eventNameInput" name="name" maxlength="80" autocomplete="off" />
+                </label>
+                <label>
+                  Event date
+                  <input id="eventDateInput" name="eventDate" type="date" />
+                </label>
+                <label>
+                  Practice goal
+                  <input id="practiceGoalInput" name="practiceGoalPerPerson" type="number" min="1" max="100" value="5" />
+                </label>
+                <button type="submit">Save Event</button>
+              </form>
+            </details>
+          </aside>
+
+          <section class="main-panel">
+            <div class="panel-heading">
+              <div>
+                <h2 id="panelTitle">Performance Links</h2>
+                <p id="panelSubtitle">Vote on Instagram links, finalize the event list, and track practice.</p>
+              </div>
+            </div>
+
+            <div id="cards" class="cards"></div>
+            <div id="practiceView" class="practice-view hidden">
+              <form id="practiceForm" class="practice-form">
+                <label>
+                  Your name
+                  <input name="person" maxlength="60" required autocomplete="name" />
+                </label>
+                <label>
+                  Performance
+                  <select name="performanceId" id="practicePerformance"></select>
+                </label>
+                <label>
+                  Minutes
+                  <input name="minutes" type="number" min="1" max="600" value="20" />
+                </label>
+                <label class="checkbox-row">
+                  <input name="practicedAtHome" type="checkbox" checked />
+                  Practiced at home
+                </label>
+                <label>
+                  Note
+                  <input name="notes" maxlength="180" autocomplete="off" />
+                </label>
+                <button type="submit">Log Practice</button>
+              </form>
+              <div id="practiceLogs" class="logs"></div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
