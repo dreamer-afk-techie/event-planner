@@ -219,6 +219,8 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "/api/events": self.create_event,
             "/api/event": self.update_event,
             "/api/performances": self.add_performance,
+            "/api/performance": self.edit_performance,
+            "/api/delete-performance": self.delete_performance,
             "/api/dancer-group": self.update_dancer_group,
             "/api/vote": self.vote,
             "/api/finalize": self.finalize_performance,
@@ -309,6 +311,36 @@ class DanceHandler(SimpleHTTPRequestHandler):
             raise ValueError("Choose a valid dancer group.")
         performance["dancerGroup"] = dancer_group
         return {"ok": True}
+
+    def edit_performance(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
+        event_id = clean_text(payload.get("eventId"), 40)
+        performance = find_performance(store, clean_text(payload.get("performanceId"), 40), event_id)
+        if not performance:
+            raise ValueError("Performance not found.")
+        title = clean_text(payload.get("title"), 100)
+        dance_style = clean_text(payload.get("danceStyle"), 80)
+        if not title or not dance_style:
+            raise ValueError("Title and dance style are required.")
+        performance.update({
+            "title": title,
+            "danceStyle": dance_style,
+            "instagramUrl": validate_instagram_url(payload.get("instagramUrl")),
+            "addedBy": normalize_name(payload.get("addedBy")),
+            "notes": clean_text(payload.get("notes"), MAX_NOTES),
+        })
+        return {"ok": True}
+
+    def delete_performance(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
+        event_id = clean_text(payload.get("eventId"), 40)
+        performance_id = clean_text(payload.get("performanceId"), 40)
+        performances = store.get("performances", [])
+        if not isinstance(performances, list):
+            raise ValueError("Store is corrupted.")
+        for index, performance in enumerate(performances):
+            if performance.get("id") == performance_id and performance.get("eventId") == event_id:
+                performances.pop(index)
+                return {"ok": True}
+        raise ValueError("Performance not found.")
 
     def vote(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
         event_id = clean_text(payload.get("eventId"), 40)

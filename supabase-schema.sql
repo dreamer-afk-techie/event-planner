@@ -201,7 +201,7 @@ alter table public.event_members enable row level security;
 
 revoke all on public.events, public.performances, public.practice_logs, public.event_members from anon;
 grant select, update on public.events to authenticated;
-grant select, insert, update on public.performances to authenticated;
+grant select, insert, update, delete on public.performances to authenticated;
 grant select, insert on public.practice_logs to authenticated;
 grant select, insert on public.event_members to authenticated;
 revoke all on function public.is_event_member(uuid), public.is_event_owner(uuid), public.create_event_with_code(text, date, integer, text), public.join_event_with_code(text) from public;
@@ -223,9 +223,11 @@ drop policy if exists "Anyone can vote and finalize performances" on public.perf
 drop policy if exists "Members can read performances" on public.performances;
 drop policy if exists "Members can add performances" on public.performances;
 drop policy if exists "Members can update performances" on public.performances;
+drop policy if exists "Members can delete performances" on public.performances;
 create policy "Members can read performances" on public.performances for select to authenticated using (public.is_event_member(event_id));
 create policy "Members can add performances" on public.performances for insert to authenticated with check (public.is_event_member(event_id));
 create policy "Members can update performances" on public.performances for update to authenticated using (public.is_event_member(event_id)) with check (public.is_event_member(event_id));
+create policy "Members can delete performances" on public.performances for delete to authenticated using (public.is_event_member(event_id));
 
 drop policy if exists "Anyone can read practice logs" on public.practice_logs;
 drop policy if exists "Anyone can add practice logs" on public.practice_logs;

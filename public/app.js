@@ -280,6 +280,26 @@ async function supabaseApi(path, payload) {
     return { ok: true, performance: fromSupabasePerformance(rows[0]) };
   }
 
+  if (path === "/api/performance") {
+    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        title: cleanInput(payload.title, 100),
+        dance_style: cleanInput(payload.danceStyle, 80),
+        instagram_url: validateInstagramUrl(payload.instagramUrl),
+        added_by: cleanInput(payload.addedBy, 60) || "Guest",
+        notes: cleanInput(payload.notes, 500),
+      }),
+    });
+    return { ok: true };
+  }
+
+  if (path === "/api/delete-performance") {
+    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, { method: "DELETE" });
+    return { ok: true };
+  }
+
   if (path === "/api/vote") {
     const rows = await supabaseRequest(`performances?select=id,votes&event_id=eq.${encodeURIComponent(payload.eventId)}&id=eq.${encodeURIComponent(payload.performanceId)}`);
     const performance = rows[0];
@@ -508,6 +528,28 @@ function staticApi(path, payload) {
     event.updatedAt = now;
     writeStaticStore(store);
     return { ok: true, performance };
+  }
+
+  if (path === "/api/performance") {
+    const performance = store.performances.find((item) => item.eventId === event.id && item.id === payload.performanceId);
+    if (!performance) throw new Error("Performance not found.");
+    performance.title = cleanInput(payload.title, 100);
+    performance.danceStyle = cleanInput(payload.danceStyle, 80);
+    performance.instagramUrl = validateInstagramUrl(payload.instagramUrl);
+    performance.addedBy = cleanInput(payload.addedBy, 60) || "Guest";
+    performance.notes = cleanInput(payload.notes, 500);
+    event.updatedAt = now;
+    writeStaticStore(store);
+    return { ok: true };
+  }
+
+  if (path === "/api/delete-performance") {
+    const index = store.performances.findIndex((item) => item.eventId === event.id && item.id === payload.performanceId);
+    if (index === -1) throw new Error("Performance not found.");
+    store.performances.splice(index, 1);
+    event.updatedAt = now;
+    writeStaticStore(store);
+    return { ok: true };
   }
 
   if (path === "/api/vote") {
@@ -833,8 +875,10 @@ function renderCard(item) {
   open.rel = "noopener noreferrer";
   open.textContent = "Open reference";
   const vote = actionButton(`Vote (${votes.length})`, () => voteFor(item.id));
+  const edit = actionButton("Edit", () => editPerformance(item));
+  const remove = actionButton("Delete", () => deletePerformance(item.id), "danger");
   const finalize = actionButton("Finalize", () => finalizeItem(item.id), "danger");
-  actions.append(open, vote);
+  actions.append(open, vote, edit, remove);
   if (!item.finalized) {
     actions.append(finalize);
   }
@@ -903,6 +947,29 @@ async function finalizeItem(performanceId) {
 async function updateDancerGroup(performanceId, dancerGroup) {
   await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup });
   setStatus("Dancers updated");
+  await loadState();
+}
+
+async function editPerformance(item) {
+  const title = window.prompt("Performance title", item.title);
+  if (title === null) return;
+  const danceStyle = window.prompt("Dance style", item.danceStyle);
+  if (danceStyle === null) return;
+  const instagramUrl = window.prompt("Instagram link", item.instagramUrl);
+  if (instagramUrl === null) return;
+  const addedBy = window.prompt("Added by", item.addedBy);
+  if (addedBy === null) return;
+  const notes = window.prompt("Notes", item.notes || "");
+  if (notes === null) return;
+  await api("/api/performance", { eventId: selectedEventId, performanceId: item.id, title, danceStyle, instagramUrl, addedBy, notes });
+  setStatus("Performance updated");
+  await loadState();
+}
+
+async function deletePerformance(performanceId) {
+  if (!window.confirm("Delete this performance link? This cannot be undone.")) return;
+  await api("/api/delete-performance", { eventId: selectedEventId, performanceId });
+  setStatus("Performance deleted");
   await loadState();
 }
 
