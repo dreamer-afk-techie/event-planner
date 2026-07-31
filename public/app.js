@@ -53,6 +53,10 @@ function setStoredSession(session) {
 }
 
 async function api(path, payload) {
+  if (!state) {
+    await initialization;
+  }
+
   if (supabaseMode) {
     return supabaseApi(path, payload);
   }
@@ -1019,6 +1023,8 @@ async function initialize() {
   await loadState();
 }
 
-initialize().catch((error) => {
+const initialization = initialize();
+
+initialization.catch((error) => {
   setStatus(error.message);
 });
