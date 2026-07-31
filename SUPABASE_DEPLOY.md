@@ -8,6 +8,8 @@ This version keeps the website as plain HTML, CSS, and JavaScript. Supabase prov
 2. Create a free project.
 3. Open SQL Editor.
 4. Paste and run `supabase-schema.sql`.
+5. In **Authentication → Providers**, enable **Anonymous Sign-Ins**. No email provider or redirect URL is needed.
+6. Enable CAPTCHA for anonymous sign-ins before sharing a public link; Supabase recommends it to reduce automated account creation.
 
 ## 2. Add Frontend Config
 
@@ -36,7 +38,13 @@ Open:
 http://127.0.0.1:8010/
 ```
 
-When Supabase is configured, the status pill should say `Live shared data`.
+When Supabase is configured, the app creates an anonymous Supabase account without collecting an email address. The event owner creates a code of at least 12 characters and shares it privately. Participants enter that code to join the event.
+
+Anonymous accounts are stored only in the browser. If someone signs out, clears browser data, or uses another device, they must enter the event code again.
+
+## Existing data
+
+The security migration adds an owner and a protected event code to each new event. Existing events do not have these values automatically and will be hidden after the migration. Recreate them after applying the migration.
 
 ## 4. Upload The Frontend
 
@@ -53,5 +61,5 @@ For the simplest manual deploy, zip the contents inside `public/`, not the `publ
 
 - Supabase Row Level Security is enabled in `supabase-schema.sql`.
 - The frontend uses only the publishable/anon key.
-- This simple version allows anyone with the site link to create events, vote, finalize, and log practice.
-- For stronger control later, add login or an event invite code.
+- GitHub Pages serves a public frontend; its publishable Supabase key is intentionally visible. Access is enforced by Supabase Auth and Row Level Security.
+- Never add a Supabase secret/service-role key to `public/config.js`.

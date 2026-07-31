@@ -3,7 +3,9 @@ let activeView = "all";
 let selectedEventId = new URLSearchParams(window.location.search).get("event") || "";
 let staticMode = false;
 let supabaseMode = false;
+let authSession = null;
 const STATIC_STORE_KEY = "eventPlannerStaticStore";
+const AUTH_STORAGE_KEY = "eventPlannerSupabaseSession";
 const MAX_STATIC_ENTRIES = 10000;
 const SUPABASE_CONFIG = window.EVENT_PLANNER_SUPABASE || {};
 
@@ -29,13 +31,32 @@ const nodes = {
   panelSubtitle: document.querySelector("#panelSubtitle"),
   statusText: document.querySelector("#statusText"),
   createEventForm: document.querySelector("#createEventForm"),
+  joinEventForm: document.querySelector("#joinEventForm"),
   eventForm: document.querySelector("#eventForm"),
   performanceForm: document.querySelector("#performanceForm"),
   practiceForm: document.querySelector("#practiceForm"),
+  authView: document.querySelector("#authView"),
+  authMessage: document.querySelector("#authMessage"),
+  continueButton: document.querySelector("#continueButton"),
+  signOutButton: document.querySelector("#signOutButton"),
 };
 
 function setStatus(message) {
   nodes.statusText.textContent = message;
+}
+
+function setAuthMessage(message) {
+  nodes.authMessage.textContent = message;
+}
+
+function currentUser() {
+  return authSession?.user || null;
+}
+
+function setStoredSession(session) {
+  authSession = session;
+  if (session) localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+  else localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
 async function api(path, payload) {
@@ -64,6 +85,10 @@ async function api(path, payload) {
 
 async function loadState() {
   if (isSupabaseConfigured()) {
+    if (!currentUser()) {
+      showAuth();
+      return;
+    }
     supabaseMode = true;
     staticMode = false;
     state = await readSupabaseState();
@@ -104,13 +129,47 @@ function isSupabaseConfigured() {
   return Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 }
 
+function showAuth() {
+  nodes.authView.classList.remove("hidden");
+  nodes.homeView.classList.add("hidden");
+  nodes.plannerView.classList.add("hidden");
+  nodes.plannerTabs.classList.add("hidden");
+  nodes.signOutButton.classList.add("hidden");
+}
+
+function showApp() {
+  nodes.authView.classList.add("hidden");
+  nodes.signOutButton.classList.remove("hidden");
+}
+
+async function supabaseAuth(path, options = {}) {
+  const response = await fetch(`${SUPABASE_CONFIG.url.replace(/\/$/, "")}/auth/v1/${path}`, {
+    ...options,
+    headers: { apikey: SUPABASE_CONFIG.anonKey, "Content-Type": "application/json", ...(options.headers || {}) },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.msg || data.message || data.error_description || "Authentication failed.");
+  return data;
+}
+
+async function restoreSession() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || "null");
+    if (!saved?.access_token) return;
+    const user = await supabaseAuth("user", { headers: { Authorization: `Bearer ${saved.access_token}` } });
+    setStoredSession({ ...saved, user });
+  } catch {
+    setStoredSession(null);
+  }
+}
+
 async function supabaseRequest(path, options = {}) {
   const url = `${SUPABASE_CONFIG.url.replace(/\/$/, "")}/rest/v1/${path}`;
   const response = await fetch(url, {
     ...options,
     headers: {
       apikey: SUPABASE_CONFIG.anonKey,
-      Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
+      Authorization: `Bearer ${authSession?.access_token || SUPABASE_CONFIG.anonKey}`,
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
@@ -178,16 +237,25 @@ async function supabaseApi(path, payload) {
   const now = new Date().toISOString();
 
   if (path === "/api/events") {
-    const rows = await supabaseRequest("events?select=*", {
+    const rows = await supabaseRequest("rpc/create_event_with_code", {
       method: "POST",
       headers: { Prefer: "return=representation" },
       body: JSON.stringify({
-        name: cleanInput(payload.name, 80) || "New Event",
-        event_date: cleanInput(payload.eventDate, 20) || null,
-        practice_goal_per_person: clampNumber(payload.practiceGoalPerPerson, 1, 100, 5),
+        p_name: cleanInput(payload.name, 80) || "New Event",
+        p_event_date: cleanInput(payload.eventDate, 20) || null,
+        p_practice_goal: clampNumber(payload.practiceGoalPerPerson, 1, 100, 5),
+        p_event_code: cleanInput(payload.eventCode, 64),
       }),
     });
     return { ok: true, event: fromSupabaseEvent(rows[0]) };
+  }
+
+  if (path === "/api/join") {
+    const rows = await supabaseRequest("rpc/join_event_with_code", {
+      method: "POST",
+      body: JSON.stringify({ p_event_code: cleanInput(payload.eventCode, 64) }),
+    });
+    return { ok: true, eventId: rows?.[0]?.event_id || rows?.event_id };
   }
 
   if (path === "/api/event") {
@@ -278,6 +346,7 @@ function fromSupabaseEvent(row) {
   return {
     id: row.id,
     name: row.name,
+    ownerId: row.owner_id,
     eventDate: row.event_date || "",
     practiceGoalPerPerson: row.practice_goal_per_person || 5,
     createdAt: row.created_at,
@@ -574,6 +643,7 @@ function updateUrl() {
 
 function render() {
   const hasSelectedEvent = Boolean(selectedEventId && state.event);
+  nodes.joinEventForm.hidden = !supabaseMode;
   nodes.homeView.classList.toggle("hidden", hasSelectedEvent);
   nodes.plannerView.classList.toggle("hidden", !hasSelectedEvent);
   nodes.plannerTabs.classList.toggle("hidden", !hasSelectedEvent);
@@ -873,6 +943,17 @@ nodes.createEventForm.addEventListener("submit", async (event) => {
   await loadState();
 });
 
+nodes.joinEventForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(nodes.joinEventForm);
+  const result = await api("/api/join", { eventCode: form.get("eventCode") });
+  nodes.joinEventForm.reset();
+  selectedEventId = result.eventId;
+  updateUrl();
+  setStatus("Joined event");
+  await loadState();
+});
+
 nodes.eventForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(nodes.eventForm);
@@ -902,6 +983,44 @@ nodes.practiceForm.addEventListener("submit", async (event) => {
   await loadState();
 });
 
-loadState().catch((error) => {
-  setStatus(error.message);
+nodes.continueButton.addEventListener("click", async () => {
+  try {
+    const session = await supabaseAuth("signup", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    const anonymousSession = session.session || session;
+    if (!anonymousSession.access_token) throw new Error("Anonymous sign-in is not enabled in Supabase yet.");
+    setStoredSession(anonymousSession);
+    showApp();
+    await loadState();
+  } catch (error) {
+    setAuthMessage(error.message);
+  }
+});
+
+nodes.signOutButton.addEventListener("click", async () => {
+  try {
+    if (authSession?.access_token) await supabaseAuth("logout", { method: "POST", headers: { Authorization: `Bearer ${authSession.access_token}` } });
+  } finally {
+    setStoredSession(null);
+    selectedEventId = "";
+    updateUrl();
+    showAuth();
+  }
+});
+
+async function initialize() {
+  if (isSupabaseConfigured()) {
+    showAuth();
+    await restoreSession();
+    if (!currentUser()) return;
+    showApp();
+  }
+  await loadState();
+}
+
+initialize().catch((error) => {
+  if (isSupabaseConfigured()) setAuthMessage(error.message);
+  else setStatus(error.message);
 });
