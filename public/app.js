@@ -211,6 +211,7 @@ async function supabaseApi(path, payload) {
         event_id: payload.eventId,
         title: cleanInput(payload.title, 100),
         dance_style: cleanInput(payload.danceStyle, 80),
+        dancer_group: cleanInput(payload.dancerGroup, 40),
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
         notes: cleanInput(payload.notes, 500),
@@ -290,6 +291,7 @@ function fromSupabasePerformance(row) {
     eventId: row.event_id,
     title: row.title,
     danceStyle: row.dance_style,
+    dancerGroup: row.dancer_group || "",
     instagramUrl: row.instagram_url,
     addedBy: row.added_by,
     notes: row.notes || "",
@@ -416,14 +418,16 @@ function staticApi(path, payload) {
     }
     const title = cleanInput(payload.title, 100);
     const danceStyle = cleanInput(payload.danceStyle, 80);
-    if (!title || !danceStyle) {
-      throw new Error("Title and dance style are required.");
+    const dancerGroup = cleanInput(payload.dancerGroup, 40);
+    if (!title || !danceStyle || !dancerGroup) {
+      throw new Error("Title, dance style, and dancers are required.");
     }
     const performance = {
       id: createId(),
       eventId: event.id,
       title,
       danceStyle,
+      dancerGroup,
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
       notes: cleanInput(payload.notes, 500),
@@ -717,7 +721,7 @@ function renderCard(item) {
 
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  meta.append(pill(item.danceStyle), textSpan(`${votes.length} votes`));
+  meta.append(pill(item.danceStyle), ...(item.dancerGroup ? [pill(item.dancerGroup)] : []), textSpan(`${votes.length} votes`));
   if (item.finalized) {
     meta.append(pill("Finalized"));
   }

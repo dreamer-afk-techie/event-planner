@@ -14,6 +14,7 @@ create table if not exists public.performances (
   event_id uuid not null references public.events(id) on delete cascade,
   title text not null check (char_length(title) between 1 and 100),
   dance_style text not null check (char_length(dance_style) between 1 and 80),
+  dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids')),
   instagram_url text not null check (instagram_url ~ '^https://(www\.)?instagram\.com/.+'),
   added_by text not null check (char_length(added_by) between 1 and 60),
   notes text not null default '' check (char_length(notes) <= 500),
@@ -23,6 +24,9 @@ create table if not exists public.performances (
   finalized_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.performances
+add column if not exists dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids'));
 
 create table if not exists public.practice_logs (
   id uuid primary key default gen_random_uuid(),

@@ -276,17 +276,19 @@ class DanceHandler(SimpleHTTPRequestHandler):
 
         title = clean_text(payload.get("title"), 100)
         dance_style = clean_text(payload.get("danceStyle"), 80)
+        dancer_group = clean_text(payload.get("dancerGroup"), 40)
         instagram_url = validate_instagram_url(payload.get("instagramUrl"))
         added_by = normalize_name(payload.get("addedBy"))
         notes = clean_text(payload.get("notes"), MAX_NOTES)
-        if not title or not dance_style:
-            raise ValueError("Title and dance style are required.")
+        if not title or not dance_style or not dancer_group:
+            raise ValueError("Title, dance style, and dancers are required.")
 
         performance = {
             "id": secrets.token_urlsafe(12),
             "eventId": event_id,
             "title": title,
             "danceStyle": dance_style,
+            "dancerGroup": dancer_group,
             "instagramUrl": instagram_url,
             "addedBy": added_by,
             "notes": notes,
