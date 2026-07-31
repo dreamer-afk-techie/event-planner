@@ -543,9 +543,15 @@ textarea {
 }
 
 .dancer-group {
+  display: grid;
+  gap: 5px;
   margin: 10px 0 6px;
   color: var(--ink);
   font-weight: 800;
+}
+
+.dancer-group select {
+  max-width: 260px;
 }
 
 .pill {

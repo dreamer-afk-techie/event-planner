@@ -8,6 +8,7 @@ const STATIC_STORE_KEY = "eventPlannerStaticStore";
 const AUTH_STORAGE_KEY = "eventPlannerSupabaseSession";
 const MAX_STATIC_ENTRIES = 10000;
 const SUPABASE_CONFIG = window.EVENT_PLANNER_SUPABASE || {};
+const DANCER_GROUPS = ["Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids"];
 
 const nodes = {
   homeView: document.querySelector("#homeView"),
@@ -258,6 +259,15 @@ async function supabaseApi(path, payload) {
     return { ok: true, eventId: rows?.[0]?.event_id || rows?.event_id };
   }
 
+  if (path === "/api/dancer-group") {
+    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ dancer_group: cleanInput(payload.dancerGroup, 40) }),
+    });
+    return { ok: true };
+  }
+
   if (path === "/api/event") {
     await supabaseRequest(`events?id=eq.${encodeURIComponent(payload.eventId)}`, {
       method: "PATCH",
@@ -279,7 +289,7 @@ async function supabaseApi(path, payload) {
         event_id: payload.eventId,
         title: cleanInput(payload.title, 100),
         dance_style: cleanInput(payload.danceStyle, 80),
-        dancer_group: cleanInput(payload.dancerGroup, 40),
+        dancer_group: "",
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
         notes: cleanInput(payload.notes, 500),
@@ -481,22 +491,30 @@ function staticApi(path, payload) {
     return { ok: true };
   }
 
+  if (path === "/api/dancer-group") {
+    const performance = store.performances.find((item) => item.eventId === event.id && item.id === payload.performanceId);
+    if (!performance) throw new Error("Performance not found.");
+    performance.dancerGroup = cleanInput(payload.dancerGroup, 40);
+    event.updatedAt = now;
+    writeStaticStore(store);
+    return { ok: true };
+  }
+
   if (path === "/api/performances") {
     if (store.performances.length >= MAX_STATIC_ENTRIES) {
       throw new Error("The performance list is full.");
     }
     const title = cleanInput(payload.title, 100);
     const danceStyle = cleanInput(payload.danceStyle, 80);
-    const dancerGroup = cleanInput(payload.dancerGroup, 40);
-    if (!title || !danceStyle || !dancerGroup) {
-      throw new Error("Title, dance style, and dancers are required.");
+    if (!title || !danceStyle) {
+      throw new Error("Title and dance style are required.");
     }
     const performance = {
       id: createId(),
       eventId: event.id,
       title,
       danceStyle,
-      dancerGroup,
+      dancerGroup: "",
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
       notes: cleanInput(payload.notes, 500),
@@ -801,9 +819,28 @@ function renderCard(item) {
 
   const notes = document.createElement("p");
   notes.textContent = item.notes || "No notes yet.";
-  const dancers = document.createElement("p");
+  const dancers = document.createElement("label");
   dancers.className = "dancer-group";
-  dancers.textContent = `Who will dance? ${item.dancerGroup || "Not specified"}`;
+  const dancerLabel = document.createElement("span");
+  dancerLabel.textContent = "Who will dance?";
+  const dancerSelect = document.createElement("select");
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Choose dancers";
+  dancerSelect.append(placeholder, ...DANCER_GROUPS.map((group) => {
+    const option = document.createElement("option");
+    option.value = group;
+    option.textContent = group;
+    return option;
+  }));
+  dancerSelect.value = item.dancerGroup || "";
+  dancerSelect.addEventListener("change", () => {
+    updateDancerGroup(item.id, dancerSelect.value).catch((error) => {
+      setStatus(error.message);
+      dancerSelect.value = item.dancerGroup || "";
+    });
+  });
+  dancers.append(dancerLabel, dancerSelect);
   content.append(postHeader, meta, dancers, notes);
 
   const actions = document.createElement("div");
@@ -878,6 +915,12 @@ async function finalizeItem(performanceId) {
   if (!finalizer) return;
   await api("/api/finalize", { eventId: selectedEventId, performanceId, finalizer });
   setStatus("Performance finalized");
+  await loadState();
+}
+
+async function updateDancerGroup(performanceId, dancerGroup) {
+  await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup });
+  setStatus("Dancers updated");
   await loadState();
 }
 

@@ -219,6 +219,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "/api/events": self.create_event,
             "/api/event": self.update_event,
             "/api/performances": self.add_performance,
+            "/api/dancer-group": self.update_dancer_group,
             "/api/vote": self.vote,
             "/api/finalize": self.finalize_performance,
             "/api/practice": self.log_practice,
@@ -276,19 +277,18 @@ class DanceHandler(SimpleHTTPRequestHandler):
 
         title = clean_text(payload.get("title"), 100)
         dance_style = clean_text(payload.get("danceStyle"), 80)
-        dancer_group = clean_text(payload.get("dancerGroup"), 40)
         instagram_url = validate_instagram_url(payload.get("instagramUrl"))
         added_by = normalize_name(payload.get("addedBy"))
         notes = clean_text(payload.get("notes"), MAX_NOTES)
-        if not title or not dance_style or not dancer_group:
-            raise ValueError("Title, dance style, and dancers are required.")
+        if not title or not dance_style:
+            raise ValueError("Title and dance style are required.")
 
         performance = {
             "id": secrets.token_urlsafe(12),
             "eventId": event_id,
             "title": title,
             "danceStyle": dance_style,
-            "dancerGroup": dancer_group,
+            "dancerGroup": "",
             "instagramUrl": instagram_url,
             "addedBy": added_by,
             "notes": notes,
@@ -298,6 +298,17 @@ class DanceHandler(SimpleHTTPRequestHandler):
         }
         performances.append(performance)
         return {"ok": True, "performance": performance}
+
+    def update_dancer_group(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
+        event_id = clean_text(payload.get("eventId"), 40)
+        performance = find_performance(store, clean_text(payload.get("performanceId"), 40), event_id)
+        dancer_group = clean_text(payload.get("dancerGroup"), 40)
+        if not performance:
+            raise ValueError("Performance not found.")
+        if dancer_group not in {"", "Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids"}:
+            raise ValueError("Choose a valid dancer group.")
+        performance["dancerGroup"] = dancer_group
+        return {"ok": True}
 
     def vote(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
         event_id = clean_text(payload.get("eventId"), 40)
