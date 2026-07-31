@@ -289,7 +289,7 @@ async function supabaseApi(path, payload) {
         event_id: payload.eventId,
         title: cleanInput(payload.title, 100),
         dance_style: cleanInput(payload.danceStyle, 80),
-        dancer_group: "",
+        dancer_group: null,
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
         notes: cleanInput(payload.notes, 500),
