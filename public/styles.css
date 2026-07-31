@@ -496,14 +496,17 @@ textarea {
 }
 
 .card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  padding: 16px;
+  padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--surface);
   box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.card:hover {
+  box-shadow: var(--soft-shadow);
+  transform: translateY(-1px);
 }
 
 .card.finalized {
@@ -524,12 +527,14 @@ textarea {
 }
 
 .post-header span {
+  display: block;
+  margin-top: 3px;
   font-size: 0.82rem;
   font-weight: 750;
 }
 
 .post-body p {
-  margin-bottom: 12px;
+  margin: 12px 0 0;
   color: #344054;
   line-height: 1.45;
 }
@@ -538,20 +543,29 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 10px 0;
+  margin: 12px 0 10px;
   font-size: 0.86rem;
 }
 
 .dancer-group {
-  display: grid;
-  gap: 5px;
-  margin: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
   color: var(--ink);
-  font-weight: 800;
+  font-size: 0.86rem;
+  font-weight: 850;
 }
 
 .dancer-group select {
-  max-width: 260px;
+  width: auto;
+  min-width: 160px;
+  max-width: 100%;
+  padding: 8px 34px 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  font-size: 0.86rem;
+  font-weight: 750;
 }
 
 .pill {
@@ -567,29 +581,48 @@ textarea {
 }
 
 .card-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, max-content));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  justify-content: start;
-  padding-top: 10px;
+  align-items: center;
+  padding-top: 14px;
+  margin-top: 14px;
   border-top: 1px solid var(--line);
 }
 
 .card-actions a,
 .secondary,
-.danger {
+.danger,
+.destructive {
   display: inline-flex;
-  min-height: 38px;
+  min-height: 34px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
   color: var(--blue);
-  padding: 0 13px;
+  padding: 0 12px;
   text-decoration: none;
   font-weight: 900;
   box-shadow: none;
+}
+
+.card-actions .open-reference {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
+.card-actions .secondary,
+.card-actions .destructive {
+  border-color: transparent;
+  background: transparent;
+  padding: 0 7px;
+}
+
+.card-actions .destructive {
+  color: var(--red);
 }
 
 .danger {
@@ -746,6 +779,16 @@ textarea {
   }
 
   .card-actions {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .dancer-group {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dancer-group select {
+    width: 100%;
   }
 }

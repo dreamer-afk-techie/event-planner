@@ -296,7 +296,13 @@ async function supabaseApi(path, payload) {
   }
 
   if (path === "/api/delete-performance") {
-    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, { method: "DELETE" });
+    const deleted = await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
+      method: "DELETE",
+      headers: { Prefer: "return=representation" },
+    });
+    if (!Array.isArray(deleted) || deleted.length !== 1) {
+      throw new Error("This link was not deleted. Run the latest Supabase schema to enable the delete permission, then try again.");
+    }
     return { ok: true };
   }
 
@@ -817,32 +823,25 @@ function renderCard(item) {
   card.className = `card ${item.finalized ? "finalized" : ""}`;
   const votes = Array.isArray(item.votes) ? item.votes : [];
 
-  const avatar = document.createElement("div");
-  avatar.className = "avatar";
-  avatar.textContent = initials(item.addedBy);
-
   const content = document.createElement("div");
   content.className = "post-body";
   const postHeader = document.createElement("div");
   postHeader.className = "post-header";
+  const heading = document.createElement("div");
   const title = document.createElement("h3");
   title.textContent = item.title;
   const author = document.createElement("span");
   author.textContent = `Posted by ${item.addedBy}`;
-  postHeader.append(title, author);
+  heading.append(title, author);
+  postHeader.append(heading);
+  if (item.finalized) {
+    postHeader.append(pill("Finalized"));
+  }
 
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  meta.append(
-    pill(item.danceStyle),
-    textSpan(`${votes.length} votes`),
-  );
-  if (item.finalized) {
-    meta.append(pill("Finalized"));
-  }
+  meta.append(pill(item.danceStyle), textSpan(`${votes.length} vote${votes.length === 1 ? "" : "s"}`));
 
-  const notes = document.createElement("p");
-  notes.textContent = item.notes || "No notes yet.";
   const dancers = document.createElement("label");
   dancers.className = "dancer-group";
   const dancerLabel = document.createElement("span");
@@ -865,7 +864,13 @@ function renderCard(item) {
     });
   });
   dancers.append(dancerLabel, dancerSelect);
-  content.append(postHeader, meta, dancers, notes);
+  content.append(postHeader, meta, dancers);
+  if (item.notes) {
+    const notes = document.createElement("p");
+    notes.className = "performance-notes";
+    notes.textContent = item.notes;
+    content.append(notes);
+  }
 
   const actions = document.createElement("div");
   actions.className = "card-actions";
@@ -874,9 +879,10 @@ function renderCard(item) {
   open.target = "_blank";
   open.rel = "noopener noreferrer";
   open.textContent = "Open reference";
+  open.className = "open-reference";
   const vote = actionButton(`Vote (${votes.length})`, () => voteFor(item.id));
   const edit = actionButton("Edit", () => editPerformance(item));
-  const remove = actionButton("Delete", () => deletePerformance(item.id), "danger");
+  const remove = actionButton("Delete", () => deletePerformance(item.id), "destructive");
   const finalize = actionButton("Finalize", () => finalizeItem(item.id), "danger");
   actions.append(open, vote, edit, remove);
   if (!item.finalized) {
@@ -884,7 +890,7 @@ function renderCard(item) {
   }
   content.append(actions);
 
-  card.append(avatar, content);
+  card.append(content);
   return card;
 }
 
@@ -915,7 +921,11 @@ function actionButton(label, handler, className = "secondary") {
   button.type = "button";
   button.className = className;
   button.textContent = label;
-  button.addEventListener("click", handler);
+  button.addEventListener("click", () => {
+    Promise.resolve(handler()).catch((error) => {
+      setStatus(error.message || "That action could not be completed.");
+    });
+  });
   return button;
 }
 
