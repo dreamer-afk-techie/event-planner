@@ -793,7 +793,6 @@ function renderCard(item) {
   meta.className = "card-meta";
   meta.append(
     pill(item.danceStyle),
-    ...(item.dancerGroup ? [pill(`Who will dance: ${item.dancerGroup}`)] : []),
     textSpan(`${votes.length} votes`),
   );
   if (item.finalized) {
@@ -802,7 +801,10 @@ function renderCard(item) {
 
   const notes = document.createElement("p");
   notes.textContent = item.notes || "No notes yet.";
-  content.append(postHeader, meta, notes);
+  const dancers = document.createElement("p");
+  dancers.className = "dancer-group";
+  dancers.textContent = `Who will dance? ${item.dancerGroup || "Not specified"}`;
+  content.append(postHeader, meta, dancers, notes);
 
   const actions = document.createElement("div");
   actions.className = "card-actions";

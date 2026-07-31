@@ -159,7 +159,7 @@ begin
     coalesce(nullif(trim(p_name), ''), 'New Event'),
     p_event_date,
     greatest(1, least(100, coalesce(p_practice_goal, 5))),
-    crypt(trim(p_event_code), gen_salt('bf', 10))
+    extensions.crypt(trim(p_event_code), extensions.gen_salt('bf'))
   )
   returning * into new_event;
   return query select new_event.id, new_event.owner_id, new_event.name, new_event.event_date,
@@ -182,7 +182,7 @@ begin
   select id into matched_event_id
   from public.events
   where event_code_hash is not null
-    and event_code_hash = crypt(trim(p_event_code), event_code_hash)
+    and event_code_hash = extensions.crypt(trim(p_event_code), event_code_hash)
   limit 1;
   if matched_event_id is null then
     raise exception 'Invalid event code';
@@ -238,3 +238,5 @@ drop policy if exists "Members can see their membership" on public.event_members
 drop policy if exists "Owners can add members" on public.event_members;
 create policy "Members can see their membership" on public.event_members for select to authenticated using (public.is_event_member(event_id));
 create policy "Owners can add members" on public.event_members for insert to authenticated with check (public.is_event_owner(event_id));
+
+notify pgrst, 'reload schema';
