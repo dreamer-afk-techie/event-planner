@@ -721,7 +721,11 @@ function renderCard(item) {
 
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  meta.append(pill(item.danceStyle), ...(item.dancerGroup ? [pill(item.dancerGroup)] : []), textSpan(`${votes.length} votes`));
+  meta.append(
+    pill(item.danceStyle),
+    ...(item.dancerGroup ? [pill(`Who will dance: ${item.dancerGroup}`)] : []),
+    textSpan(`${votes.length} votes`),
+  );
   if (item.finalized) {
     meta.append(pill("Finalized"));
   }
