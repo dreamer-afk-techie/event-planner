@@ -36,18 +36,10 @@ const nodes = {
   eventForm: document.querySelector("#eventForm"),
   performanceForm: document.querySelector("#performanceForm"),
   practiceForm: document.querySelector("#practiceForm"),
-  authView: document.querySelector("#authView"),
-  authMessage: document.querySelector("#authMessage"),
-  continueButton: document.querySelector("#continueButton"),
-  signOutButton: document.querySelector("#signOutButton"),
 };
 
 function setStatus(message) {
   nodes.statusText.textContent = message;
-}
-
-function setAuthMessage(message) {
-  nodes.authMessage.textContent = message;
 }
 
 function currentUser() {
@@ -87,8 +79,7 @@ async function api(path, payload) {
 async function loadState() {
   if (isSupabaseConfigured()) {
     if (!currentUser()) {
-      showAuth();
-      return;
+      throw new Error("Anonymous sign-ins are not enabled in Supabase yet.");
     }
     supabaseMode = true;
     staticMode = false;
@@ -128,19 +119,6 @@ async function loadState() {
 
 function isSupabaseConfigured() {
   return Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
-}
-
-function showAuth() {
-  nodes.authView.classList.remove("hidden");
-  nodes.homeView.classList.add("hidden");
-  nodes.plannerView.classList.add("hidden");
-  nodes.plannerTabs.classList.add("hidden");
-  nodes.signOutButton.classList.add("hidden");
-}
-
-function showApp() {
-  nodes.authView.classList.add("hidden");
-  nodes.signOutButton.classList.remove("hidden");
 }
 
 async function supabaseAuth(path, options = {}) {
@@ -1028,44 +1006,19 @@ nodes.practiceForm.addEventListener("submit", async (event) => {
   await loadState();
 });
 
-nodes.continueButton.addEventListener("click", async () => {
-  try {
-    const session = await supabaseAuth("signup", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
-    const anonymousSession = session.session || session;
-    if (!anonymousSession.access_token) throw new Error("Anonymous sign-in is not enabled in Supabase yet.");
-    setStoredSession(anonymousSession);
-    showApp();
-    await loadState();
-  } catch (error) {
-    setAuthMessage(error.message);
-  }
-});
-
-nodes.signOutButton.addEventListener("click", async () => {
-  try {
-    if (authSession?.access_token) await supabaseAuth("logout", { method: "POST", headers: { Authorization: `Bearer ${authSession.access_token}` } });
-  } finally {
-    setStoredSession(null);
-    selectedEventId = "";
-    updateUrl();
-    showAuth();
-  }
-});
-
 async function initialize() {
   if (isSupabaseConfigured()) {
-    showAuth();
     await restoreSession();
-    if (!currentUser()) return;
-    showApp();
+    if (!currentUser()) {
+      const session = await supabaseAuth("signup", { method: "POST", body: JSON.stringify({}) });
+      const anonymousSession = session.session || session;
+      if (!anonymousSession.access_token) throw new Error("Anonymous sign-ins are not enabled in Supabase yet.");
+      setStoredSession(anonymousSession);
+    }
   }
   await loadState();
 }
 
 initialize().catch((error) => {
-  if (isSupabaseConfigured()) setAuthMessage(error.message);
-  else setStatus(error.message);
+  setStatus(error.message);
 });
