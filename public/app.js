@@ -904,21 +904,27 @@ function renderMainPanel() {
 }
 
 function comparePerformanceOrder(left, right) {
-  const leftOrder = Number(left.displayOrder);
-  const rightOrder = Number(right.displayOrder);
-  const leftFallback = Number.isFinite(leftOrder) ? leftOrder : Date.parse(left.createdAt) || 0;
-  const rightFallback = Number.isFinite(rightOrder) ? rightOrder : Date.parse(right.createdAt) || 0;
+  const leftOrder = savedOrder(left.displayOrder);
+  const rightOrder = savedOrder(right.displayOrder);
+  const leftFallback = leftOrder ?? (Date.parse(left.createdAt) || 0);
+  const rightFallback = rightOrder ?? (Date.parse(right.createdAt) || 0);
   return leftFallback - rightFallback || left.title.localeCompare(right.title);
 }
 
 function compareGroupOrder(left, right) {
   const leftItem = left.items[0];
   const rightItem = right.items[0];
-  const leftOrder = Number(leftItem.groupOrder);
-  const rightOrder = Number(rightItem.groupOrder);
-  const leftFallback = Number.isFinite(leftOrder) ? leftOrder : Date.parse(leftItem.createdAt) || 0;
-  const rightFallback = Number.isFinite(rightOrder) ? rightOrder : Date.parse(rightItem.createdAt) || 0;
+  const leftOrder = savedOrder(leftItem.groupOrder);
+  const rightOrder = savedOrder(rightItem.groupOrder);
+  const leftFallback = leftOrder ?? (Date.parse(leftItem.createdAt) || 0);
+  const rightFallback = rightOrder ?? (Date.parse(rightItem.createdAt) || 0);
   return leftFallback - rightFallback || left.groupName.localeCompare(right.groupName);
+}
+
+function savedOrder(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const order = Number(value);
+  return Number.isFinite(order) ? order : null;
 }
 
 function renderCard(item, index, groupItems) {
@@ -948,7 +954,7 @@ function renderCard(item, index, groupItems) {
   const dancers = document.createElement("label");
   dancers.className = "dancer-group";
   const dancerLabel = document.createElement("span");
-  dancerLabel.textContent = "Who will dance?";
+  dancerLabel.textContent = "Dancers";
   const dancerInput = document.createElement("input");
   dancerInput.type = "text";
   dancerInput.value = item.dancerGroup || "";
@@ -979,9 +985,9 @@ function renderCard(item, index, groupItems) {
   open.href = item.instagramUrl;
   open.target = "_blank";
   open.rel = "noopener noreferrer";
-  open.textContent = "Open reference";
+  open.textContent = "View link";
   open.className = "open-reference";
-  const vote = actionButton(`Vote (${votes.length})`, () => voteFor(item.id));
+  const vote = actionButton(`Vote · ${votes.length}`, () => voteFor(item.id));
   const moveUp = actionButton("↑", () => movePerformance(item, index, groupItems, -1), "move-button");
   moveUp.title = "Move up";
   moveUp.setAttribute("aria-label", "Move performance up");
@@ -989,8 +995,8 @@ function renderCard(item, index, groupItems) {
   moveDown.title = "Move down";
   moveDown.setAttribute("aria-label", "Move performance down");
   const edit = actionButton("Edit", () => editPerformance(item));
-  const remove = actionButton("Delete", () => deletePerformance(item.id), "destructive");
-  const finalize = actionButton("Finalize", () => finalizeItem(item.id), "danger");
+  const remove = actionButton("Remove", () => deletePerformance(item.id), "destructive");
+  const finalize = actionButton("Mark final", () => finalizeItem(item.id), "danger");
   actions.append(open, vote);
   if (index > 0) actions.append(moveUp);
   if (index < groupItems.length - 1) actions.append(moveDown);
@@ -1077,8 +1083,8 @@ async function updateDancerGroup(performanceId, dancerGroup) {
 async function movePerformance(item, index, groupItems, direction) {
   const other = groupItems[index + direction];
   if (!other) return;
-  const itemOrder = Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : Date.parse(item.createdAt) || Date.now();
-  const otherOrder = Number.isFinite(Number(other.displayOrder)) ? Number(other.displayOrder) : Date.parse(other.createdAt) || Date.now() + direction;
+  const itemOrder = savedOrder(item.displayOrder) ?? (Date.parse(item.createdAt) || Date.now());
+  const otherOrder = savedOrder(other.displayOrder) ?? (Date.parse(other.createdAt) || Date.now() + direction);
   await api("/api/reorder", {
     eventId: selectedEventId,
     updates: [
@@ -1094,8 +1100,8 @@ async function moveGroup(groupEntries, index, direction) {
   const group = groupEntries[index];
   const otherGroup = groupEntries[index + direction];
   if (!otherGroup) return;
-  const groupOrder = Number.isFinite(Number(group.items[0].groupOrder)) ? Number(group.items[0].groupOrder) : Date.parse(group.items[0].createdAt) || Date.now();
-  const otherOrder = Number.isFinite(Number(otherGroup.items[0].groupOrder)) ? Number(otherGroup.items[0].groupOrder) : Date.parse(otherGroup.items[0].createdAt) || Date.now() + direction;
+  const groupOrder = savedOrder(group.items[0].groupOrder) ?? (Date.parse(group.items[0].createdAt) || Date.now());
+  const otherOrder = savedOrder(otherGroup.items[0].groupOrder) ?? (Date.parse(otherGroup.items[0].createdAt) || Date.now() + direction);
   const updates = [
     ...group.items.map((item) => ({ performanceId: item.id, groupOrder: otherOrder })),
     ...otherGroup.items.map((item) => ({ performanceId: item.id, groupOrder })),
