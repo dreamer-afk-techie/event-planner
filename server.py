@@ -222,7 +222,6 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "/api/performance": self.edit_performance,
             "/api/delete-performance": self.delete_performance,
             "/api/dancer-group": self.update_dancer_group,
-            "/api/participants": self.update_participant_names,
             "/api/vote": self.vote,
             "/api/finalize": self.finalize_performance,
             "/api/practice": self.log_practice,
@@ -282,7 +281,6 @@ class DanceHandler(SimpleHTTPRequestHandler):
         dance_style = clean_text(payload.get("danceStyle"), 80)
         instagram_url = validate_instagram_url(payload.get("instagramUrl"))
         added_by = normalize_name(payload.get("addedBy"))
-        participant_names = clean_text(payload.get("participantNames"), MAX_NOTES)
         notes = clean_text(payload.get("notes"), MAX_NOTES)
         if not title or not dance_style:
             raise ValueError("Title and dance style are required.")
@@ -295,7 +293,6 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "dancerGroup": "",
             "instagramUrl": instagram_url,
             "addedBy": added_by,
-            "participantNames": participant_names,
             "notes": notes,
             "votes": [],
             "finalized": False,
@@ -315,14 +312,6 @@ class DanceHandler(SimpleHTTPRequestHandler):
         performance["dancerGroup"] = dancer_group
         return {"ok": True}
 
-    def update_participant_names(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
-        event_id = clean_text(payload.get("eventId"), 40)
-        performance = find_performance(store, clean_text(payload.get("performanceId"), 40), event_id)
-        if not performance:
-            raise ValueError("Performance not found.")
-        performance["participantNames"] = clean_text(payload.get("participantNames"), MAX_NOTES)
-        return {"ok": True}
-
     def edit_performance(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
         event_id = clean_text(payload.get("eventId"), 40)
         performance = find_performance(store, clean_text(payload.get("performanceId"), 40), event_id)
@@ -337,7 +326,6 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "danceStyle": dance_style,
             "instagramUrl": validate_instagram_url(payload.get("instagramUrl")),
             "addedBy": normalize_name(payload.get("addedBy")),
-            "participantNames": clean_text(payload.get("participantNames"), MAX_NOTES),
             "notes": clean_text(payload.get("notes"), MAX_NOTES),
         })
         return {"ok": True}

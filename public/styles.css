@@ -508,13 +508,13 @@ textarea {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 8px;
-  padding: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+  gap: 6px;
+  padding: 8px;
 }
 
 .card {
-  padding: 12px 14px;
+  padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -547,12 +547,12 @@ textarea {
 .post-header span {
   display: block;
   margin-top: 1px;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 750;
 }
 
 .post-body p {
-  margin: 8px 0 0;
+  margin: 5px 0 0;
   color: #344054;
   font-size: 0.9rem;
   line-height: 1.35;
@@ -562,52 +562,44 @@ textarea {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
 }
 
 .card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 7px 0;
-  font-size: 0.8rem;
+  margin: 4px 0;
+  font-size: 0.74rem;
 }
 
 .card-fields {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
-.dancer-group,
-.participant-field {
+.dancer-group {
   display: grid;
-  grid-template-columns: auto minmax(120px, 1fr);
+  grid-template-columns: auto minmax(105px, 1fr);
   align-items: center;
   gap: 6px;
   min-width: 0;
-  flex: 1 1 180px;
+  flex: 1;
   margin: 0;
   color: var(--ink);
   font-size: 0.76rem;
   font-weight: 850;
 }
 
-.dancer-group select,
-.participant-field input {
+.dancer-group select {
   width: auto;
-  min-width: 145px;
+  min-width: 105px;
   max-width: 100%;
-  padding: 6px 30px 6px 8px;
+  padding: 4px 24px 4px 6px;
   border-radius: 10px;
   background: var(--surface-soft);
   font-size: 0.8rem;
   font-weight: 750;
-}
-
-.participant-field input {
-  min-width: 0;
-  width: 100%;
 }
 
 .pill {
@@ -625,11 +617,11 @@ textarea {
 .card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
   align-items: center;
-  padding-top: 9px;
-  margin-top: 9px;
-  border-top: 1px solid var(--line);
+  padding-top: 5px;
+  margin-top: 5px;
+  border-top: 0;
 }
 
 .card-actions a,
@@ -637,24 +629,24 @@ textarea {
 .danger,
 .destructive {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 25px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
   color: var(--blue);
-  padding: 0 10px;
-  font-size: 0.82rem;
+  padding: 0 5px;
+  font-size: 0.72rem;
   text-decoration: none;
   font-weight: 900;
   box-shadow: none;
 }
 
 .card-actions .open-reference {
-  border-color: var(--blue);
-  background: var(--blue);
-  color: #fff;
+  border-color: transparent;
+  background: transparent;
+  color: var(--blue);
 }
 
 .card-actions .secondary,
@@ -842,14 +834,12 @@ textarea {
     display: grid;
   }
 
-  .dancer-group,
-  .participant-field {
+  .dancer-group {
     align-items: stretch;
     grid-template-columns: 1fr;
   }
 
-  .dancer-group select,
-  .participant-field input {
+  .dancer-group select {
     width: 100%;
   }
 }

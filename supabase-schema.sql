@@ -25,7 +25,6 @@ create table if not exists public.performances (
   dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids')),
   instagram_url text not null check (instagram_url ~ '^https://(www\.)?instagram\.com/.+'),
   added_by text not null check (char_length(added_by) between 1 and 60),
-  participant_names text not null default '' check (char_length(participant_names) <= 500),
   notes text not null default '' check (char_length(notes) <= 500),
   votes text[] not null default '{}',
   finalized boolean not null default false,
@@ -36,9 +35,6 @@ create table if not exists public.performances (
 
 alter table public.performances
 add column if not exists dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids'));
-
-alter table public.performances
-add column if not exists participant_names text not null default '' check (char_length(participant_names) <= 500);
 
 create table if not exists public.practice_logs (
   id uuid primary key default gen_random_uuid(),

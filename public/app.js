@@ -252,15 +252,6 @@ async function supabaseApi(path, payload) {
     return { ok: true };
   }
 
-  if (path === "/api/participants") {
-    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
-      method: "PATCH",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ participant_names: cleanInput(payload.participantNames, 500) }),
-    });
-    return { ok: true };
-  }
-
   if (path === "/api/event") {
     await supabaseRequest(`events?id=eq.${encodeURIComponent(payload.eventId)}`, {
       method: "PATCH",
@@ -285,7 +276,6 @@ async function supabaseApi(path, payload) {
         dancer_group: null,
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
-        participant_names: cleanInput(payload.participantNames, 500),
         notes: cleanInput(payload.notes, 500),
       }),
     });
@@ -301,7 +291,6 @@ async function supabaseApi(path, payload) {
         dance_style: cleanInput(payload.danceStyle, 80),
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
-        participant_names: cleanInput(payload.participantNames, 500),
         notes: cleanInput(payload.notes, 500),
       }),
     });
@@ -394,7 +383,6 @@ function fromSupabasePerformance(row) {
     dancerGroup: row.dancer_group || "",
     instagramUrl: row.instagram_url,
     addedBy: row.added_by,
-    participantNames: row.participant_names || "",
     notes: row.notes || "",
     votes: Array.isArray(row.votes) ? row.votes : [],
     finalized: Boolean(row.finalized),
@@ -522,15 +510,6 @@ function staticApi(path, payload) {
     return { ok: true };
   }
 
-  if (path === "/api/participants") {
-    const performance = store.performances.find((item) => item.eventId === event.id && item.id === payload.performanceId);
-    if (!performance) throw new Error("Performance not found.");
-    performance.participantNames = cleanInput(payload.participantNames, 500);
-    event.updatedAt = now;
-    writeStaticStore(store);
-    return { ok: true };
-  }
-
   if (path === "/api/performances") {
     if (store.performances.length >= MAX_STATIC_ENTRIES) {
       throw new Error("The performance list is full.");
@@ -548,7 +527,6 @@ function staticApi(path, payload) {
       dancerGroup: "",
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
-      participantNames: cleanInput(payload.participantNames, 500),
       notes: cleanInput(payload.notes, 500),
       votes: [],
       finalized: false,
@@ -567,7 +545,6 @@ function staticApi(path, payload) {
     performance.danceStyle = cleanInput(payload.danceStyle, 80);
     performance.instagramUrl = validateInstagramUrl(payload.instagramUrl);
     performance.addedBy = cleanInput(payload.addedBy, 60) || "Guest";
-    performance.participantNames = cleanInput(payload.participantNames, 500);
     performance.notes = cleanInput(payload.notes, 500);
     event.updatedAt = now;
     writeStaticStore(store);
@@ -890,26 +867,9 @@ function renderCard(item) {
     });
   });
   dancers.append(dancerLabel, dancerSelect);
-  const participantField = document.createElement("label");
-  participantField.className = "participant-field";
-  const participantLabel = document.createElement("span");
-  participantLabel.textContent = "Participants";
-  const participantInput = document.createElement("input");
-  participantInput.type = "text";
-  participantInput.value = item.participantNames || "";
-  participantInput.placeholder = "Add names";
-  participantInput.maxLength = 500;
-  participantInput.autocomplete = "off";
-  participantInput.addEventListener("change", () => {
-    updateParticipantNames(item.id, participantInput.value).catch((error) => {
-      setStatus(error.message);
-      participantInput.value = item.participantNames || "";
-    });
-  });
-  participantField.append(participantLabel, participantInput);
   const cardFields = document.createElement("div");
   cardFields.className = "card-fields";
-  cardFields.append(dancers, participantField);
+  cardFields.append(dancers);
   content.append(postHeader, meta, cardFields);
   if (item.notes) {
     const notes = document.createElement("p");
@@ -1006,12 +966,6 @@ async function updateDancerGroup(performanceId, dancerGroup) {
   await loadState();
 }
 
-async function updateParticipantNames(performanceId, participantNames) {
-  await api("/api/participants", { eventId: selectedEventId, performanceId, participantNames });
-  setStatus("Participants updated");
-  await loadState();
-}
-
 async function editPerformance(item) {
   const title = window.prompt("Performance title", item.title);
   if (title === null) return;
@@ -1021,11 +975,9 @@ async function editPerformance(item) {
   if (instagramUrl === null) return;
   const addedBy = window.prompt("Added by", item.addedBy);
   if (addedBy === null) return;
-  const participantNames = window.prompt("Participant names (separate with commas)", item.participantNames || "");
-  if (participantNames === null) return;
   const notes = window.prompt("Notes", item.notes || "");
   if (notes === null) return;
-  await api("/api/performance", { eventId: selectedEventId, performanceId: item.id, title, danceStyle, instagramUrl, addedBy, participantNames, notes });
+  await api("/api/performance", { eventId: selectedEventId, performanceId: item.id, title, danceStyle, instagramUrl, addedBy, notes });
   setStatus("Performance updated");
   await loadState();
 }
