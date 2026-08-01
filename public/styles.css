@@ -591,7 +591,7 @@ textarea {
   font-weight: 850;
 }
 
-.dancer-group select {
+.dancer-group input {
   width: auto;
   min-width: 105px;
   max-width: 100%;
@@ -839,7 +839,7 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .dancer-group select {
+  .dancer-group input {
     width: 100%;
   }
 }

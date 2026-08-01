@@ -308,8 +308,8 @@ class DanceHandler(SimpleHTTPRequestHandler):
         dancer_group = clean_text(payload.get("dancerGroup"), 40)
         if not performance:
             raise ValueError("Performance not found.")
-        if dancer_group not in {"", "Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids", "Host family", "Mom & Son"}:
-            raise ValueError("Choose a valid dancer group.")
+        if dancer_group and not re.fullmatch(r"[A-Za-z ]+", dancer_group):
+            raise ValueError("Who will dance may contain letters and spaces only.")
         performance["dancerGroup"] = dancer_group
         return {"ok": True}
 

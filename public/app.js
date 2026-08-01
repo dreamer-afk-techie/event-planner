@@ -8,7 +8,6 @@ const STATIC_STORE_KEY = "eventPlannerStaticStore";
 const AUTH_STORAGE_KEY = "eventPlannerSupabaseSession";
 const MAX_STATIC_ENTRIES = 10000;
 const SUPABASE_CONFIG = window.EVENT_PLANNER_SUPABASE || {};
-const DANCER_GROUPS = ["Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids", "Host family", "Mom & Son"];
 
 const nodes = {
   homeView: document.querySelector("#homeView"),
@@ -247,7 +246,7 @@ async function supabaseApi(path, payload) {
     await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ dancer_group: cleanInput(payload.dancerGroup, 40) }),
+      body: JSON.stringify({ dancer_group: cleanInput(payload.dancerGroup, 40) || null }),
     });
     return { ok: true };
   }
@@ -856,24 +855,19 @@ function renderCard(item) {
   dancers.className = "dancer-group";
   const dancerLabel = document.createElement("span");
   dancerLabel.textContent = "Who will dance?";
-  const dancerSelect = document.createElement("select");
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "Choose dancers";
-  dancerSelect.append(placeholder, ...DANCER_GROUPS.map((group) => {
-    const option = document.createElement("option");
-    option.value = group;
-    option.textContent = group;
-    return option;
-  }));
-  dancerSelect.value = item.dancerGroup || "";
-  dancerSelect.addEventListener("change", () => {
-    updateDancerGroup(item.id, dancerSelect.value).catch((error) => {
+  const dancerInput = document.createElement("input");
+  dancerInput.type = "text";
+  dancerInput.value = item.dancerGroup || "";
+  dancerInput.placeholder = "e.g. Host family";
+  dancerInput.maxLength = 40;
+  dancerInput.autocomplete = "off";
+  dancerInput.addEventListener("change", () => {
+    updateDancerGroup(item.id, dancerInput.value).catch((error) => {
       setStatus(error.message);
-      dancerSelect.value = item.dancerGroup || "";
+      dancerInput.value = item.dancerGroup || "";
     });
   });
-  dancers.append(dancerLabel, dancerSelect);
+  dancers.append(dancerLabel, dancerInput);
   const cardFields = document.createElement("div");
   cardFields.className = "card-fields";
   cardFields.append(dancers);
@@ -968,7 +962,11 @@ async function finalizeItem(performanceId) {
 }
 
 async function updateDancerGroup(performanceId, dancerGroup) {
-  await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup });
+  const value = cleanInput(dancerGroup, 40);
+  if (value && !/^[A-Za-z ]+$/.test(value)) {
+    throw new Error("Who will dance may contain letters and spaces only.");
+  }
+  await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup: value });
   setStatus("Dancers updated");
   await loadState();
 }
