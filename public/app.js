@@ -302,10 +302,31 @@ async function supabaseApi(path, payload) {
   }
 
   if (path === "/api/reorder") {
-    await supabaseRequest("rpc/reorder_performances", {
-      method: "POST",
-      body: JSON.stringify({ p_event_id: payload.eventId, p_updates: payload.updates || [] }),
-    });
+    const updates = payload.updates || [];
+    if (!Array.isArray(updates) || updates.length === 0) throw new Error("No ordering changes were provided.");
+    try {
+      await supabaseRequest("rpc/reorder_performances", {
+        method: "POST",
+        body: JSON.stringify({ p_event_id: payload.eventId, p_updates: updates }),
+      });
+    } catch (rpcError) {
+      try {
+        for (const update of updates) {
+          const body = {};
+          if (savedOrder(update.displayOrder) !== null) body.display_order = savedOrder(update.displayOrder);
+          if (savedOrder(update.groupOrder) !== null) body.group_order = savedOrder(update.groupOrder);
+          if (Object.keys(body).length === 0) throw new Error("Invalid order update.");
+          const rows = await supabaseRequest(`performances?id=eq.${encodeURIComponent(update.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
+            method: "PATCH",
+            headers: { Prefer: "return=representation" },
+            body: JSON.stringify(body),
+          });
+          if (!Array.isArray(rows) || rows.length !== 1) throw new Error("No performance row was updated.");
+        }
+      } catch (directError) {
+        throw new Error("Ordering could not be saved. Run the Supabase ordering SQL migration, then refresh the page.");
+      }
+    }
     return { ok: true };
   }
 
