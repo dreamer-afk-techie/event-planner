@@ -824,7 +824,32 @@ function renderMainPanel() {
     return;
   }
 
-  nodes.cards.replaceChildren(...performances.map(renderCard));
+  const groups = new Map();
+  performances.forEach((item) => {
+    const groupName = item.dancerGroup || "Not assigned";
+    const items = groups.get(groupName) || [];
+    items.push(item);
+    groups.set(groupName, items);
+  });
+
+  nodes.cards.replaceChildren(
+    ...Array.from(groups, ([groupName, items]) => {
+      const section = document.createElement("section");
+      section.className = "performance-group";
+      const heading = document.createElement("div");
+      heading.className = "performance-group-heading";
+      const title = document.createElement("h3");
+      title.textContent = groupName;
+      const summary = document.createElement("span");
+      summary.textContent = items.length > 1 ? `Medley · ${items.length} links` : "1 link";
+      heading.append(title, summary);
+      const tiles = document.createElement("div");
+      tiles.className = "group-tiles";
+      tiles.append(...items.map(renderCard));
+      section.append(heading, tiles);
+      return section;
+    }),
+  );
 }
 
 function renderCard(item) {

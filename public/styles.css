@@ -508,9 +508,38 @@ textarea {
 
 .cards {
   display: grid;
+  gap: 14px;
+  padding: 8px;
+}
+
+.performance-group {
+  display: grid;
+  gap: 6px;
+}
+
+.performance-group-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 2px;
+}
+
+.performance-group-heading h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.performance-group-heading span {
+  color: var(--brand);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.group-tiles {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
   gap: 6px;
-  padding: 8px;
 }
 
 .card {
@@ -806,7 +835,7 @@ textarea {
   .stats-grid,
   .practice-form,
   .join-event,
-  .cards {
+  .group-tiles {
     grid-template-columns: 1fr;
   }
 
