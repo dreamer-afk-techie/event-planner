@@ -302,18 +302,10 @@ async function supabaseApi(path, payload) {
   }
 
   if (path === "/api/reorder") {
-    for (const update of payload.updates || []) {
-      const body = {};
-      if (Number.isFinite(Number(update.displayOrder))) body.display_order = Number(update.displayOrder);
-      if (Number.isFinite(Number(update.groupOrder))) body.group_order = Number(update.groupOrder);
-      if (Object.keys(body).length === 0) throw new Error("Invalid order update.");
-      const rows = await supabaseRequest(`performances?id=eq.${encodeURIComponent(update.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
-        method: "PATCH",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify(body),
-      });
-      if (!Array.isArray(rows) || rows.length !== 1) throw new Error("Could not save the new order.");
-    }
+    await supabaseRequest("rpc/reorder_performances", {
+      method: "POST",
+      body: JSON.stringify({ p_event_id: payload.eventId, p_updates: payload.updates || [] }),
+    });
     return { ok: true };
   }
 

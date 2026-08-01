@@ -22,7 +22,7 @@ create table if not exists public.performances (
   event_id uuid not null references public.events(id) on delete cascade,
   title text not null check (char_length(title) between 1 and 100),
   dance_style text not null check (char_length(dance_style) between 1 and 80),
-  dancer_group text check (dancer_group ~ '^[A-Za-z ]+$'),
+  dancer_group text check (dancer_group ~ '^[A-Zxa-z ]+$'),
   display_order bigint,
   group_order bigint,
   instagram_url text not null check (instagram_url ~ '^https://((www\.)?instagram\.com|((www|m)\.)?youtube\.com|youtu\.be)/.+'),
@@ -263,5 +263,33 @@ drop policy if exists "Members can see their membership" on public.event_members
 drop policy if exists "Owners can add members" on public.event_members;
 create policy "Members can see their membership" on public.event_members for select to authenticated using (public.is_event_member(event_id));
 create policy "Owners can add members" on public.event_members for insert to authenticated with check (public.is_event_owner(event_id));
+
+create or replace function public.reorder_performances(p_event_id uuid, p_updates jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null or not public.is_event_member(p_event_id) then
+    raise exception 'You do not have access to reorder this event.';
+  end if;
+
+  if jsonb_typeof(p_updates) <> 'array' or jsonb_array_length(p_updates) = 0 then
+    raise exception 'At least one performance is required.';
+  end if;
+
+  update public.performances as performance
+  set
+    display_order = coalesce(nullif(update_item ->> 'displayOrder', '')::bigint, performance.display_order),
+    group_order = coalesce(nullif(update_item ->> 'groupOrder', '')::bigint, performance.group_order)
+  from jsonb_array_elements(p_updates) as update_item
+  where performance.id = (update_item ->> 'performanceId')::uuid
+    and performance.event_id = p_event_id;
+end;
+$$;
+
+revoke all on function public.reorder_performances(uuid, jsonb) from public;
+grant execute on function public.reorder_performances(uuid, jsonb) to authenticated;
 
 notify pgrst, 'reload schema';
