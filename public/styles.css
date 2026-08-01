@@ -515,6 +515,10 @@ textarea {
 .performance-group {
   display: grid;
   gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.78);
 }
 
 .performance-group-heading {
@@ -522,7 +526,8 @@ textarea {
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 2px;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid var(--line);
 }
 
 .performance-group-heading h3 {
@@ -538,12 +543,12 @@ textarea {
 
 .group-tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
   gap: 6px;
 }
 
 .card {
-  padding: 9px 10px;
+  padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -683,6 +688,14 @@ textarea {
   border-color: transparent;
   background: transparent;
   padding: 0 7px;
+}
+
+.card-actions .move-button {
+  min-width: 23px;
+  border-color: transparent;
+  background: #f2f4f7;
+  color: var(--ink);
+  padding: 0;
 }
 
 .card-actions .destructive {

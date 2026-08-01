@@ -273,6 +273,7 @@ async function supabaseApi(path, payload) {
         title: cleanInput(payload.title, 100),
         dance_style: cleanInput(payload.danceStyle, 80),
         dancer_group: null,
+        display_order: Date.now(),
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
         notes: cleanInput(payload.notes, 500),
@@ -295,6 +296,18 @@ async function supabaseApi(path, payload) {
     });
     if (!Array.isArray(updated) || updated.length !== 1) {
       throw new Error("This link was not updated. Run the latest Supabase schema to enable the update permission, then try again.");
+    }
+    return { ok: true };
+  }
+
+  if (path === "/api/reorder") {
+    for (const update of payload.updates || []) {
+      const rows = await supabaseRequest(`performances?id=eq.${encodeURIComponent(update.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({ display_order: update.displayOrder }),
+      });
+      if (!Array.isArray(rows) || rows.length !== 1) throw new Error("Could not save the new order.");
     }
     return { ok: true };
   }
@@ -383,6 +396,7 @@ function fromSupabasePerformance(row) {
     title: row.title,
     danceStyle: row.dance_style,
     dancerGroup: row.dancer_group || "",
+    displayOrder: row.display_order ?? null,
     instagramUrl: row.instagram_url,
     addedBy: row.added_by,
     notes: row.notes || "",
@@ -527,6 +541,7 @@ function staticApi(path, payload) {
       title,
       danceStyle,
       dancerGroup: "",
+      displayOrder: Date.now(),
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
       notes: cleanInput(payload.notes, 500),
@@ -548,6 +563,17 @@ function staticApi(path, payload) {
     performance.instagramUrl = validateInstagramUrl(payload.instagramUrl);
     performance.addedBy = cleanInput(payload.addedBy, 60) || "Guest";
     performance.notes = cleanInput(payload.notes, 500);
+    event.updatedAt = now;
+    writeStaticStore(store);
+    return { ok: true };
+  }
+
+  if (path === "/api/reorder") {
+    for (const update of payload.updates || []) {
+      const performance = store.performances.find((item) => item.eventId === event.id && item.id === update.performanceId);
+      if (!performance) throw new Error("Performance not found.");
+      performance.displayOrder = Number(update.displayOrder);
+    }
     event.updatedAt = now;
     writeStaticStore(store);
     return { ok: true };
@@ -816,7 +842,7 @@ function renderMainPanel() {
   nodes.panelSubtitle.textContent =
     activeView === "finalized"
       ? "Locked-in dances for the event program."
-      : "Vote on Instagram references, finalize dances, and keep the shortlist moving.";
+      : "Use the arrows to arrange each group, then vote and finalize the program.";
 
   const performances = filteredPerformances();
   if (performances.length === 0) {
@@ -843,16 +869,25 @@ function renderMainPanel() {
       const summary = document.createElement("span");
       summary.textContent = items.length > 1 ? `Medley · ${items.length} links` : "1 link";
       heading.append(title, summary);
+      items.sort(comparePerformanceOrder);
       const tiles = document.createElement("div");
       tiles.className = "group-tiles";
-      tiles.append(...items.map(renderCard));
+      tiles.append(...items.map((item, index) => renderCard(item, index, items)));
       section.append(heading, tiles);
       return section;
     }),
   );
 }
 
-function renderCard(item) {
+function comparePerformanceOrder(left, right) {
+  const leftOrder = Number(left.displayOrder);
+  const rightOrder = Number(right.displayOrder);
+  const leftFallback = Number.isFinite(leftOrder) ? leftOrder : Date.parse(left.createdAt) || 0;
+  const rightFallback = Number.isFinite(rightOrder) ? rightOrder : Date.parse(right.createdAt) || 0;
+  return leftFallback - rightFallback || left.title.localeCompare(right.title);
+}
+
+function renderCard(item, index, groupItems) {
   const card = document.createElement("article");
   card.className = `card ${item.finalized ? "finalized" : ""}`;
   const votes = Array.isArray(item.votes) ? item.votes : [];
@@ -913,10 +948,19 @@ function renderCard(item) {
   open.textContent = "Open reference";
   open.className = "open-reference";
   const vote = actionButton(`Vote (${votes.length})`, () => voteFor(item.id));
+  const moveUp = actionButton("↑", () => movePerformance(item, index, groupItems, -1), "move-button");
+  moveUp.title = "Move up";
+  moveUp.setAttribute("aria-label", "Move performance up");
+  const moveDown = actionButton("↓", () => movePerformance(item, index, groupItems, 1), "move-button");
+  moveDown.title = "Move down";
+  moveDown.setAttribute("aria-label", "Move performance down");
   const edit = actionButton("Edit", () => editPerformance(item));
   const remove = actionButton("Delete", () => deletePerformance(item.id), "destructive");
   const finalize = actionButton("Finalize", () => finalizeItem(item.id), "danger");
-  actions.append(open, vote, edit, remove);
+  actions.append(open, vote);
+  if (index > 0) actions.append(moveUp);
+  if (index < groupItems.length - 1) actions.append(moveDown);
+  actions.append(edit, remove);
   if (!item.finalized) {
     actions.append(finalize);
   }
@@ -993,6 +1037,22 @@ async function updateDancerGroup(performanceId, dancerGroup) {
   }
   await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup: value });
   setStatus("Dancers updated");
+  await loadState();
+}
+
+async function movePerformance(item, index, groupItems, direction) {
+  const other = groupItems[index + direction];
+  if (!other) return;
+  const itemOrder = Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : Date.parse(item.createdAt) || Date.now();
+  const otherOrder = Number.isFinite(Number(other.displayOrder)) ? Number(other.displayOrder) : Date.parse(other.createdAt) || Date.now() + direction;
+  await api("/api/reorder", {
+    eventId: selectedEventId,
+    updates: [
+      { performanceId: item.id, displayOrder: otherOrder },
+      { performanceId: other.id, displayOrder: itemOrder },
+    ],
+  });
+  setStatus("Performance order saved");
   await loadState();
 }
 

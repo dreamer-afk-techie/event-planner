@@ -221,6 +221,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "/api/event": self.update_event,
             "/api/performances": self.add_performance,
             "/api/performance": self.edit_performance,
+            "/api/reorder": self.reorder_performances,
             "/api/delete-performance": self.delete_performance,
             "/api/dancer-group": self.update_dancer_group,
             "/api/vote": self.vote,
@@ -292,6 +293,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "title": title,
             "danceStyle": dance_style,
             "dancerGroup": "",
+            "displayOrder": int(datetime.now(timezone.utc).timestamp() * 1000),
             "instagramUrl": instagram_url,
             "addedBy": added_by,
             "notes": notes,
@@ -329,6 +331,23 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "addedBy": normalize_name(payload.get("addedBy")),
             "notes": clean_text(payload.get("notes"), MAX_NOTES),
         })
+        return {"ok": True}
+
+    def reorder_performances(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
+        event_id = clean_text(payload.get("eventId"), 40)
+        updates = payload.get("updates", [])
+        if not isinstance(updates, list) or len(updates) != 2:
+            raise ValueError("Two performances are required to change their order.")
+        for update in updates:
+            if not isinstance(update, dict):
+                raise ValueError("Invalid order update.")
+            performance = find_performance(store, clean_text(update.get("performanceId"), 40), event_id)
+            if not performance:
+                raise ValueError("Performance not found.")
+            try:
+                performance["displayOrder"] = int(update.get("displayOrder"))
+            except (TypeError, ValueError):
+                raise ValueError("Invalid performance order.") from None
         return {"ok": True}
 
     def delete_performance(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
