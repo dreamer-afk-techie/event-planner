@@ -836,6 +836,11 @@ textarea {
 
   .side-panel {
     position: static;
+    order: 2;
+  }
+
+  .main-panel {
+    order: 1;
   }
 
   .tabs {
