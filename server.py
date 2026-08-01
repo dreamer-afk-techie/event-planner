@@ -308,7 +308,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
         dancer_group = clean_text(payload.get("dancerGroup"), 40)
         if not performance:
             raise ValueError("Performance not found.")
-        if dancer_group not in {"", "Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids"}:
+        if dancer_group not in {"", "Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids", "Host family", "Mom & Son"}:
             raise ValueError("Choose a valid dancer group.")
         performance["dancerGroup"] = dancer_group
         return {"ok": True}

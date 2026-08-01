@@ -8,7 +8,7 @@ const STATIC_STORE_KEY = "eventPlannerStaticStore";
 const AUTH_STORAGE_KEY = "eventPlannerSupabaseSession";
 const MAX_STATIC_ENTRIES = 10000;
 const SUPABASE_CONFIG = window.EVENT_PLANNER_SUPABASE || {};
-const DANCER_GROUPS = ["Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids"];
+const DANCER_GROUPS = ["Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids", "Host family", "Mom & Son"];
 
 const nodes = {
   homeView: document.querySelector("#homeView"),

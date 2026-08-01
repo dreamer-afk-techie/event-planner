@@ -22,7 +22,7 @@ create table if not exists public.performances (
   event_id uuid not null references public.events(id) on delete cascade,
   title text not null check (char_length(title) between 1 and 100),
   dance_style text not null check (char_length(dance_style) between 1 and 80),
-  dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids')),
+  dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids', 'Host family', 'Mom & Son')),
   instagram_url text not null check (instagram_url ~ '^https://((www\.)?instagram\.com|((www|m)\.)?youtube\.com|youtu\.be)/.+'),
   added_by text not null check (char_length(added_by) between 1 and 60),
   notes text not null default '' check (char_length(notes) <= 500),
@@ -34,7 +34,13 @@ create table if not exists public.performances (
 );
 
 alter table public.performances
-add column if not exists dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids'));
+add column if not exists dancer_group text check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids', 'Host family', 'Mom & Son'));
+
+alter table public.performances
+drop constraint if exists performances_dancer_group_check;
+
+alter table public.performances
+add constraint performances_dancer_group_check check (dancer_group in ('Ladies', 'Men', 'Kids', 'Girls', 'Boys', 'Couples', 'Parents & Kids', 'Host family', 'Mom & Son'));
 
 alter table public.performances
 drop constraint if exists performances_instagram_url_check;
