@@ -283,9 +283,9 @@ async function supabaseApi(path, payload) {
   }
 
   if (path === "/api/performance") {
-    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
+    const updated = await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
       method: "PATCH",
-      headers: { Prefer: "return=minimal" },
+      headers: { Prefer: "return=representation" },
       body: JSON.stringify({
         title: cleanInput(payload.title, 100),
         dance_style: cleanInput(payload.danceStyle, 80),
@@ -294,6 +294,9 @@ async function supabaseApi(path, payload) {
         notes: cleanInput(payload.notes, 500),
       }),
     });
+    if (!Array.isArray(updated) || updated.length !== 1) {
+      throw new Error("This link was not updated. Run the latest Supabase schema to enable the update permission, then try again.");
+    }
     return { ok: true };
   }
 
