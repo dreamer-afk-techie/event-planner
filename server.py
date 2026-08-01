@@ -336,8 +336,8 @@ class DanceHandler(SimpleHTTPRequestHandler):
     def reorder_performances(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
         event_id = clean_text(payload.get("eventId"), 40)
         updates = payload.get("updates", [])
-        if not isinstance(updates, list) or len(updates) != 2:
-            raise ValueError("Two performances are required to change their order.")
+        if not isinstance(updates, list) or not updates:
+            raise ValueError("At least one performance is required to change the order.")
         for update in updates:
             if not isinstance(update, dict):
                 raise ValueError("Invalid order update.")
@@ -345,7 +345,10 @@ class DanceHandler(SimpleHTTPRequestHandler):
             if not performance:
                 raise ValueError("Performance not found.")
             try:
-                performance["displayOrder"] = int(update.get("displayOrder"))
+                if update.get("displayOrder") is not None:
+                    performance["displayOrder"] = int(update.get("displayOrder"))
+                if update.get("groupOrder") is not None:
+                    performance["groupOrder"] = int(update.get("groupOrder"))
             except (TypeError, ValueError):
                 raise ValueError("Invalid performance order.") from None
         return {"ok": True}

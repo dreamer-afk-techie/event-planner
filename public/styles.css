@@ -541,6 +541,24 @@ textarea {
   font-weight: 900;
 }
 
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.group-move-button {
+  min-width: 24px;
+  min-height: 24px;
+  border: 0;
+  border-radius: 7px;
+  background: #eef2ff;
+  color: var(--brand-2);
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
 .group-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));

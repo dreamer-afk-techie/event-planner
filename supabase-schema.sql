@@ -24,6 +24,7 @@ create table if not exists public.performances (
   dance_style text not null check (char_length(dance_style) between 1 and 80),
   dancer_group text check (dancer_group ~ '^[A-Za-z ]+$'),
   display_order bigint,
+  group_order bigint,
   instagram_url text not null check (instagram_url ~ '^https://((www\.)?instagram\.com|((www|m)\.)?youtube\.com|youtu\.be)/.+'),
   added_by text not null check (char_length(added_by) between 1 and 60),
   notes text not null default '' check (char_length(notes) <= 500),
@@ -39,6 +40,9 @@ add column if not exists dancer_group text check (dancer_group ~ '^[A-Za-z ]+$')
 
 alter table public.performances
 add column if not exists display_order bigint;
+
+alter table public.performances
+add column if not exists group_order bigint;
 
 alter table public.performances
 drop constraint if exists performances_dancer_group_check;

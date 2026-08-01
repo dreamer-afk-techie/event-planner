@@ -274,6 +274,7 @@ async function supabaseApi(path, payload) {
         dance_style: cleanInput(payload.danceStyle, 80),
         dancer_group: null,
         display_order: Date.now(),
+        group_order: Date.now(),
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
         notes: cleanInput(payload.notes, 500),
@@ -302,10 +303,14 @@ async function supabaseApi(path, payload) {
 
   if (path === "/api/reorder") {
     for (const update of payload.updates || []) {
+      const body = {};
+      if (Number.isFinite(Number(update.displayOrder))) body.display_order = Number(update.displayOrder);
+      if (Number.isFinite(Number(update.groupOrder))) body.group_order = Number(update.groupOrder);
+      if (Object.keys(body).length === 0) throw new Error("Invalid order update.");
       const rows = await supabaseRequest(`performances?id=eq.${encodeURIComponent(update.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}&select=id`, {
         method: "PATCH",
         headers: { Prefer: "return=representation" },
-        body: JSON.stringify({ display_order: update.displayOrder }),
+        body: JSON.stringify(body),
       });
       if (!Array.isArray(rows) || rows.length !== 1) throw new Error("Could not save the new order.");
     }
@@ -397,6 +402,7 @@ function fromSupabasePerformance(row) {
     danceStyle: row.dance_style,
     dancerGroup: row.dancer_group || "",
     displayOrder: row.display_order ?? null,
+    groupOrder: row.group_order ?? null,
     instagramUrl: row.instagram_url,
     addedBy: row.added_by,
     notes: row.notes || "",
@@ -542,6 +548,7 @@ function staticApi(path, payload) {
       danceStyle,
       dancerGroup: "",
       displayOrder: Date.now(),
+      groupOrder: Date.now(),
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
       notes: cleanInput(payload.notes, 500),
@@ -572,7 +579,8 @@ function staticApi(path, payload) {
     for (const update of payload.updates || []) {
       const performance = store.performances.find((item) => item.eventId === event.id && item.id === update.performanceId);
       if (!performance) throw new Error("Performance not found.");
-      performance.displayOrder = Number(update.displayOrder);
+      if (Number.isFinite(Number(update.displayOrder))) performance.displayOrder = Number(update.displayOrder);
+      if (Number.isFinite(Number(update.groupOrder))) performance.groupOrder = Number(update.groupOrder);
     }
     event.updatedAt = now;
     writeStaticStore(store);
@@ -858,8 +866,9 @@ function renderMainPanel() {
     groups.set(groupName, items);
   });
 
+  const groupEntries = Array.from(groups, ([groupName, items]) => ({ groupName, items })).sort(compareGroupOrder);
   nodes.cards.replaceChildren(
-    ...Array.from(groups, ([groupName, items]) => {
+    ...groupEntries.map(({ groupName, items }, groupIndex) => {
       const section = document.createElement("section");
       section.className = "performance-group";
       const heading = document.createElement("div");
@@ -868,7 +877,22 @@ function renderMainPanel() {
       title.textContent = groupName;
       const summary = document.createElement("span");
       summary.textContent = items.length > 1 ? `Medley · ${items.length} links` : "1 link";
-      heading.append(title, summary);
+      const groupActions = document.createElement("div");
+      groupActions.className = "group-actions";
+      groupActions.append(summary);
+      if (groupIndex > 0) {
+        const moveGroupUp = actionButton("↑", () => moveGroup(groupEntries, groupIndex, -1), "group-move-button");
+        moveGroupUp.title = "Move group up";
+        moveGroupUp.setAttribute("aria-label", "Move dancer group up");
+        groupActions.append(moveGroupUp);
+      }
+      if (groupIndex < groupEntries.length - 1) {
+        const moveGroupDown = actionButton("↓", () => moveGroup(groupEntries, groupIndex, 1), "group-move-button");
+        moveGroupDown.title = "Move group down";
+        moveGroupDown.setAttribute("aria-label", "Move dancer group down");
+        groupActions.append(moveGroupDown);
+      }
+      heading.append(title, groupActions);
       items.sort(comparePerformanceOrder);
       const tiles = document.createElement("div");
       tiles.className = "group-tiles";
@@ -885,6 +909,16 @@ function comparePerformanceOrder(left, right) {
   const leftFallback = Number.isFinite(leftOrder) ? leftOrder : Date.parse(left.createdAt) || 0;
   const rightFallback = Number.isFinite(rightOrder) ? rightOrder : Date.parse(right.createdAt) || 0;
   return leftFallback - rightFallback || left.title.localeCompare(right.title);
+}
+
+function compareGroupOrder(left, right) {
+  const leftItem = left.items[0];
+  const rightItem = right.items[0];
+  const leftOrder = Number(leftItem.groupOrder);
+  const rightOrder = Number(rightItem.groupOrder);
+  const leftFallback = Number.isFinite(leftOrder) ? leftOrder : Date.parse(leftItem.createdAt) || 0;
+  const rightFallback = Number.isFinite(rightOrder) ? rightOrder : Date.parse(rightItem.createdAt) || 0;
+  return leftFallback - rightFallback || left.groupName.localeCompare(right.groupName);
 }
 
 function renderCard(item, index, groupItems) {
@@ -1053,6 +1087,21 @@ async function movePerformance(item, index, groupItems, direction) {
     ],
   });
   setStatus("Performance order saved");
+  await loadState();
+}
+
+async function moveGroup(groupEntries, index, direction) {
+  const group = groupEntries[index];
+  const otherGroup = groupEntries[index + direction];
+  if (!otherGroup) return;
+  const groupOrder = Number.isFinite(Number(group.items[0].groupOrder)) ? Number(group.items[0].groupOrder) : Date.parse(group.items[0].createdAt) || Date.now();
+  const otherOrder = Number.isFinite(Number(otherGroup.items[0].groupOrder)) ? Number(otherGroup.items[0].groupOrder) : Date.parse(otherGroup.items[0].createdAt) || Date.now() + direction;
+  const updates = [
+    ...group.items.map((item) => ({ performanceId: item.id, groupOrder: otherOrder })),
+    ...otherGroup.items.map((item) => ({ performanceId: item.id, groupOrder })),
+  ];
+  await api("/api/reorder", { eventId: selectedEventId, updates });
+  setStatus("Group order saved");
   await loadState();
 }
 
