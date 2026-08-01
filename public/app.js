@@ -276,6 +276,7 @@ async function supabaseApi(path, payload) {
         dancer_group: null,
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
+        participant_names: cleanInput(payload.participantNames, 500),
         notes: cleanInput(payload.notes, 500),
       }),
     });
@@ -291,6 +292,7 @@ async function supabaseApi(path, payload) {
         dance_style: cleanInput(payload.danceStyle, 80),
         instagram_url: validateInstagramUrl(payload.instagramUrl),
         added_by: cleanInput(payload.addedBy, 60) || "Guest",
+        participant_names: cleanInput(payload.participantNames, 500),
         notes: cleanInput(payload.notes, 500),
       }),
     });
@@ -383,6 +385,7 @@ function fromSupabasePerformance(row) {
     dancerGroup: row.dancer_group || "",
     instagramUrl: row.instagram_url,
     addedBy: row.added_by,
+    participantNames: row.participant_names || "",
     notes: row.notes || "",
     votes: Array.isArray(row.votes) ? row.votes : [],
     finalized: Boolean(row.finalized),
@@ -527,6 +530,7 @@ function staticApi(path, payload) {
       dancerGroup: "",
       instagramUrl: validateInstagramUrl(payload.instagramUrl),
       addedBy: cleanInput(payload.addedBy, 60) || "Guest",
+      participantNames: cleanInput(payload.participantNames, 500),
       notes: cleanInput(payload.notes, 500),
       votes: [],
       finalized: false,
@@ -545,6 +549,7 @@ function staticApi(path, payload) {
     performance.danceStyle = cleanInput(payload.danceStyle, 80);
     performance.instagramUrl = validateInstagramUrl(payload.instagramUrl);
     performance.addedBy = cleanInput(payload.addedBy, 60) || "Guest";
+    performance.participantNames = cleanInput(payload.participantNames, 500);
     performance.notes = cleanInput(payload.notes, 500);
     event.updatedAt = now;
     writeStaticStore(store);
@@ -874,6 +879,14 @@ function renderCard(item) {
     notes.textContent = item.notes;
     content.append(notes);
   }
+  if (item.participantNames) {
+    const participants = document.createElement("p");
+    participants.className = "participant-names";
+    const label = document.createElement("strong");
+    label.textContent = "Participants: ";
+    participants.append(label, item.participantNames);
+    content.append(participants);
+  }
 
   const actions = document.createElement("div");
   actions.className = "card-actions";
@@ -972,9 +985,11 @@ async function editPerformance(item) {
   if (instagramUrl === null) return;
   const addedBy = window.prompt("Added by", item.addedBy);
   if (addedBy === null) return;
+  const participantNames = window.prompt("Participant names (separate with commas)", item.participantNames || "");
+  if (participantNames === null) return;
   const notes = window.prompt("Notes", item.notes || "");
   if (notes === null) return;
-  await api("/api/performance", { eventId: selectedEventId, performanceId: item.id, title, danceStyle, instagramUrl, addedBy, notes });
+  await api("/api/performance", { eventId: selectedEventId, performanceId: item.id, title, danceStyle, instagramUrl, addedBy, participantNames, notes });
   setStatus("Performance updated");
   await loadState();
 }

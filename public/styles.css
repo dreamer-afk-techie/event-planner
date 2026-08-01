@@ -508,12 +508,12 @@ textarea {
 
 .cards {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .card {
-  padding: 18px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -545,55 +545,69 @@ textarea {
 
 .post-header span {
   display: block;
-  margin-top: 3px;
-  font-size: 0.82rem;
+  margin-top: 1px;
+  font-size: 0.76rem;
   font-weight: 750;
 }
 
 .post-body p {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: #344054;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.performance-notes {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.participant-names {
+  padding-left: 8px;
+  border-left: 3px solid rgba(64, 93, 230, 0.35);
+  font-size: 0.9rem;
 }
 
 .card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 12px 0 10px;
-  font-size: 0.86rem;
+  margin: 7px 0;
+  font-size: 0.8rem;
 }
 
 .dancer-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   color: var(--ink);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 850;
 }
 
 .dancer-group select {
   width: auto;
-  min-width: 160px;
+  min-width: 145px;
   max-width: 100%;
-  padding: 8px 34px 8px 10px;
+  padding: 6px 30px 6px 8px;
   border-radius: 10px;
   background: var(--surface-soft);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 750;
 }
 
 .pill {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
+  min-height: 23px;
   border-radius: 999px;
   background: #fce7f3;
   color: #9d174d;
-  padding: 0 10px;
-  font-size: 0.78rem;
+  padding: 0 8px;
+  font-size: 0.72rem;
   font-weight: 950;
 }
 
@@ -602,8 +616,8 @@ textarea {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  padding-top: 14px;
-  margin-top: 14px;
+  padding-top: 9px;
+  margin-top: 9px;
   border-top: 1px solid var(--line);
 }
 
@@ -612,14 +626,15 @@ textarea {
 .danger,
 .destructive {
   display: inline-flex;
-  min-height: 34px;
+  min-height: 32px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
   color: var(--blue);
-  padding: 0 12px;
+  padding: 0 10px;
+  font-size: 0.82rem;
   text-decoration: none;
   font-weight: 900;
   box-shadow: none;

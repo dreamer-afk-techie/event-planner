@@ -281,6 +281,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
         dance_style = clean_text(payload.get("danceStyle"), 80)
         instagram_url = validate_instagram_url(payload.get("instagramUrl"))
         added_by = normalize_name(payload.get("addedBy"))
+        participant_names = clean_text(payload.get("participantNames"), MAX_NOTES)
         notes = clean_text(payload.get("notes"), MAX_NOTES)
         if not title or not dance_style:
             raise ValueError("Title and dance style are required.")
@@ -293,6 +294,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "dancerGroup": "",
             "instagramUrl": instagram_url,
             "addedBy": added_by,
+            "participantNames": participant_names,
             "notes": notes,
             "votes": [],
             "finalized": False,
@@ -326,6 +328,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "danceStyle": dance_style,
             "instagramUrl": validate_instagram_url(payload.get("instagramUrl")),
             "addedBy": normalize_name(payload.get("addedBy")),
+            "participantNames": clean_text(payload.get("participantNames"), MAX_NOTES),
             "notes": clean_text(payload.get("notes"), MAX_NOTES),
         })
         return {"ok": True}
