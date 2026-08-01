@@ -421,6 +421,23 @@ button {
   padding: 16px;
 }
 
+.form-block small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.planner-status {
+  min-height: 1.2em;
+  margin: 6px 0 0;
+  color: var(--brand);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
 .form-heading {
   display: flex;
   align-items: center;
@@ -780,6 +797,18 @@ textarea {
 
   .card-actions {
     align-items: stretch;
+  }
+
+  .composer {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .composer button[type="submit"] {
+    position: sticky;
+    bottom: 10px;
+    z-index: 2;
+    box-shadow: 0 8px 18px rgba(64, 93, 230, 0.22);
   }
 
   .dancer-group {

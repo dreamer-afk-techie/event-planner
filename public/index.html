@@ -75,6 +75,7 @@
           <div>
             <h2 id="plannerTitle">Performance Links</h2>
             <p id="eventMeta" class="meta-line">Select an event to start planning.</p>
+            <p id="plannerStatus" class="planner-status" role="status" aria-live="polite"></p>
           </div>
         </section>
 
@@ -131,7 +132,8 @@
               </label>
               <label>
                 Instagram link
-                <input name="instagramUrl" type="url" placeholder="https://www.instagram.com/reel/..." required />
+                <input name="instagramUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://www.instagram.com/reel/..." required />
+                <small>Paste the full Instagram reel or post link.</small>
               </label>
               <label>
                 Added by

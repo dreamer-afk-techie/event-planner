@@ -31,6 +31,7 @@ const nodes = {
   panelTitle: document.querySelector("#panelTitle"),
   panelSubtitle: document.querySelector("#panelSubtitle"),
   statusText: document.querySelector("#statusText"),
+  plannerStatus: document.querySelector("#plannerStatus"),
   createEventForm: document.querySelector("#createEventForm"),
   joinEventForm: document.querySelector("#joinEventForm"),
   eventForm: document.querySelector("#eventForm"),
@@ -40,6 +41,7 @@ const nodes = {
 
 function setStatus(message) {
   nodes.statusText.textContent = message;
+  nodes.plannerStatus.textContent = message;
 }
 
 function currentUser() {
@@ -632,7 +634,8 @@ function clampNumber(value, min, max, fallback) {
 }
 
 function validateInstagramUrl(value) {
-  const url = cleanInput(value, 500);
+  const enteredUrl = cleanInput(value, 500);
+  const url = /^https?:\/\//i.test(enteredUrl) ? enteredUrl : `https://${enteredUrl}`;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" || !["instagram.com", "www.instagram.com"].includes(parsed.hostname.toLowerCase()) || parsed.pathname === "/") {
@@ -1068,11 +1071,26 @@ nodes.eventForm.addEventListener("submit", async (event) => {
 
 nodes.performanceForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!selectedEventId) {
+    setStatus("Open an event before posting a performance link.");
+    return;
+  }
+
+  const button = nodes.performanceForm.querySelector('button[type="submit"]');
   const form = new FormData(nodes.performanceForm);
-  await api("/api/performances", { ...Object.fromEntries(form), eventId: selectedEventId });
-  nodes.performanceForm.reset();
-  setStatus("Performance added");
-  await loadState();
+  button.disabled = true;
+  button.textContent = "Posting…";
+  try {
+    await api("/api/performances", { ...Object.fromEntries(form), eventId: selectedEventId });
+    nodes.performanceForm.reset();
+    setStatus("Performance link added");
+    await loadState();
+  } catch (error) {
+    setStatus(error.message || "Could not add the performance link.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Post Link";
+  }
 });
 
 nodes.practiceForm.addEventListener("submit", async (event) => {
