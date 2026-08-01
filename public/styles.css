@@ -516,9 +516,10 @@ textarea {
   display: grid;
   gap: 10px;
   padding: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--group-accent);
+  border-left: 5px solid var(--group-accent);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(135deg, var(--group-tint), #fff 55%);
   box-shadow: 0 5px 18px rgba(30, 41, 59, 0.04);
 }
 
@@ -527,18 +528,20 @@ textarea {
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 2px 10px;
-  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
+  border: 1px solid var(--group-accent);
+  border-radius: 10px;
+  background: var(--group-tint);
 }
 
 .performance-group-heading h3 {
   margin: 0;
-  color: #312e81;
+  color: var(--group-accent);
   font-size: 0.96rem;
 }
 
 .performance-group-heading span {
-  color: #6d28d9;
+  color: var(--group-accent);
   font-size: 0.74rem;
   font-weight: 900;
 }

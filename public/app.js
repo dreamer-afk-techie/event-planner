@@ -8,6 +8,13 @@ const STATIC_STORE_KEY = "eventPlannerStaticStore";
 const AUTH_STORAGE_KEY = "eventPlannerSupabaseSession";
 const MAX_STATIC_ENTRIES = 10000;
 const SUPABASE_CONFIG = window.EVENT_PLANNER_SUPABASE || {};
+const GROUP_COLORS = [
+  { accent: "#4f46e5", tint: "#eef2ff" },
+  { accent: "#0f766e", tint: "#ecfdf5" },
+  { accent: "#b45309", tint: "#fffbeb" },
+  { accent: "#be185d", tint: "#fdf2f8" },
+  { accent: "#7c3aed", tint: "#f5f3ff" },
+];
 
 const nodes = {
   homeView: document.querySelector("#homeView"),
@@ -885,6 +892,9 @@ function renderMainPanel() {
     ...groupEntries.map(({ groupName, items }, groupIndex) => {
       const section = document.createElement("section");
       section.className = "performance-group";
+      const groupColor = GROUP_COLORS[groupIndex % GROUP_COLORS.length];
+      section.style.setProperty("--group-accent", groupColor.accent);
+      section.style.setProperty("--group-tint", groupColor.tint);
       const heading = document.createElement("div");
       heading.className = "performance-group-heading";
       const title = document.createElement("h3");
