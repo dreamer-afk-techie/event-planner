@@ -508,6 +508,7 @@ textarea {
 
 .cards {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 8px;
   padding: 10px;
 }
@@ -564,12 +565,6 @@ textarea {
   -webkit-line-clamp: 2;
 }
 
-.participant-names {
-  padding-left: 8px;
-  border-left: 3px solid rgba(64, 93, 230, 0.35);
-  font-size: 0.9rem;
-}
-
 .card-meta {
   display: flex;
   flex-wrap: wrap;
@@ -578,17 +573,28 @@ textarea {
   font-size: 0.8rem;
 }
 
-.dancer-group {
+.card-fields {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.dancer-group,
+.participant-field {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 180px;
   margin: 0;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 850;
 }
 
-.dancer-group select {
+.dancer-group select,
+.participant-field input {
   width: auto;
   min-width: 145px;
   max-width: 100%;
@@ -597,6 +603,11 @@ textarea {
   background: var(--surface-soft);
   font-size: 0.8rem;
   font-weight: 750;
+}
+
+.participant-field input {
+  min-width: 0;
+  width: 100%;
 }
 
 .pill {
@@ -802,7 +813,8 @@ textarea {
   .event-grid,
   .stats-grid,
   .practice-form,
-  .join-event {
+  .join-event,
+  .cards {
     grid-template-columns: 1fr;
   }
 
@@ -826,13 +838,18 @@ textarea {
     box-shadow: 0 8px 18px rgba(64, 93, 230, 0.22);
   }
 
-  .dancer-group {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 6px;
+  .card-fields {
+    display: grid;
   }
 
-  .dancer-group select {
+  .dancer-group,
+  .participant-field {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .dancer-group select,
+  .participant-field input {
     width: 100%;
   }
 }

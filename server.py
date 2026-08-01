@@ -222,6 +222,7 @@ class DanceHandler(SimpleHTTPRequestHandler):
             "/api/performance": self.edit_performance,
             "/api/delete-performance": self.delete_performance,
             "/api/dancer-group": self.update_dancer_group,
+            "/api/participants": self.update_participant_names,
             "/api/vote": self.vote,
             "/api/finalize": self.finalize_performance,
             "/api/practice": self.log_practice,
@@ -312,6 +313,14 @@ class DanceHandler(SimpleHTTPRequestHandler):
         if dancer_group not in {"", "Ladies", "Men", "Kids", "Girls", "Boys", "Couples", "Parents & Kids"}:
             raise ValueError("Choose a valid dancer group.")
         performance["dancerGroup"] = dancer_group
+        return {"ok": True}
+
+    def update_participant_names(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:
+        event_id = clean_text(payload.get("eventId"), 40)
+        performance = find_performance(store, clean_text(payload.get("performanceId"), 40), event_id)
+        if not performance:
+            raise ValueError("Performance not found.")
+        performance["participantNames"] = clean_text(payload.get("participantNames"), MAX_NOTES)
         return {"ok": True}
 
     def edit_performance(self, store: dict[str, object], payload: dict[str, object]) -> dict[str, object]:

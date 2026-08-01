@@ -252,6 +252,15 @@ async function supabaseApi(path, payload) {
     return { ok: true };
   }
 
+  if (path === "/api/participants") {
+    await supabaseRequest(`performances?id=eq.${encodeURIComponent(payload.performanceId)}&event_id=eq.${encodeURIComponent(payload.eventId)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ participant_names: cleanInput(payload.participantNames, 500) }),
+    });
+    return { ok: true };
+  }
+
   if (path === "/api/event") {
     await supabaseRequest(`events?id=eq.${encodeURIComponent(payload.eventId)}`, {
       method: "PATCH",
@@ -508,6 +517,15 @@ function staticApi(path, payload) {
     const performance = store.performances.find((item) => item.eventId === event.id && item.id === payload.performanceId);
     if (!performance) throw new Error("Performance not found.");
     performance.dancerGroup = cleanInput(payload.dancerGroup, 40);
+    event.updatedAt = now;
+    writeStaticStore(store);
+    return { ok: true };
+  }
+
+  if (path === "/api/participants") {
+    const performance = store.performances.find((item) => item.eventId === event.id && item.id === payload.performanceId);
+    if (!performance) throw new Error("Performance not found.");
+    performance.participantNames = cleanInput(payload.participantNames, 500);
     event.updatedAt = now;
     writeStaticStore(store);
     return { ok: true };
@@ -872,20 +890,32 @@ function renderCard(item) {
     });
   });
   dancers.append(dancerLabel, dancerSelect);
-  content.append(postHeader, meta, dancers);
+  const participantField = document.createElement("label");
+  participantField.className = "participant-field";
+  const participantLabel = document.createElement("span");
+  participantLabel.textContent = "Participants";
+  const participantInput = document.createElement("input");
+  participantInput.type = "text";
+  participantInput.value = item.participantNames || "";
+  participantInput.placeholder = "Add names";
+  participantInput.maxLength = 500;
+  participantInput.autocomplete = "off";
+  participantInput.addEventListener("change", () => {
+    updateParticipantNames(item.id, participantInput.value).catch((error) => {
+      setStatus(error.message);
+      participantInput.value = item.participantNames || "";
+    });
+  });
+  participantField.append(participantLabel, participantInput);
+  const cardFields = document.createElement("div");
+  cardFields.className = "card-fields";
+  cardFields.append(dancers, participantField);
+  content.append(postHeader, meta, cardFields);
   if (item.notes) {
     const notes = document.createElement("p");
     notes.className = "performance-notes";
     notes.textContent = item.notes;
     content.append(notes);
-  }
-  if (item.participantNames) {
-    const participants = document.createElement("p");
-    participants.className = "participant-names";
-    const label = document.createElement("strong");
-    label.textContent = "Participants: ";
-    participants.append(label, item.participantNames);
-    content.append(participants);
   }
 
   const actions = document.createElement("div");
@@ -973,6 +1003,12 @@ async function finalizeItem(performanceId) {
 async function updateDancerGroup(performanceId, dancerGroup) {
   await api("/api/dancer-group", { eventId: selectedEventId, performanceId, dancerGroup });
   setStatus("Dancers updated");
+  await loadState();
+}
+
+async function updateParticipantNames(performanceId, participantNames) {
+  await api("/api/participants", { eventId: selectedEventId, performanceId, participantNames });
+  setStatus("Participants updated");
   await loadState();
 }
 
