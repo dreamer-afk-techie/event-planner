@@ -98,10 +98,11 @@ def validate_instagram_url(value: object) -> str:
     url = str(value or "").strip()
     parsed = urlparse(url)
     host = parsed.netloc.lower()
-    if parsed.scheme != "https" or host not in INSTAGRAM_HOSTS:
-        raise ValueError("Use a public https://instagram.com/... link.")
+    allowed_hosts = {*INSTAGRAM_HOSTS, "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+    if parsed.scheme != "https" or host not in allowed_hosts:
+        raise ValueError("Use a public Instagram or YouTube https:// link.")
     if not parsed.path or parsed.path == "/":
-        raise ValueError("Instagram link must point to a post, reel, profile, or saved reference.")
+        raise ValueError("The link must point to an Instagram or YouTube reference.")
     return url[:500]
 
 

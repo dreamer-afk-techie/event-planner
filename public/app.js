@@ -641,11 +641,15 @@ function validateInstagramUrl(value) {
   const url = /^https?:\/\//i.test(enteredUrl) ? enteredUrl : `https://${enteredUrl}`;
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:" || !["instagram.com", "www.instagram.com"].includes(parsed.hostname.toLowerCase()) || parsed.pathname === "/") {
+    if (
+      parsed.protocol !== "https:" ||
+      !["instagram.com", "www.instagram.com", "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"].includes(parsed.hostname.toLowerCase()) ||
+      parsed.pathname === "/"
+    ) {
       throw new Error();
     }
   } catch (error) {
-    throw new Error("Use a public https://instagram.com/... link.");
+    throw new Error("Use a public Instagram or YouTube https:// link.");
   }
   return url;
 }
@@ -974,7 +978,7 @@ async function editPerformance(item) {
   if (title === null) return;
   const danceStyle = window.prompt("Dance style", item.danceStyle);
   if (danceStyle === null) return;
-  const instagramUrl = window.prompt("Instagram link", item.instagramUrl);
+  const instagramUrl = window.prompt("Instagram or YouTube link", item.instagramUrl);
   if (instagramUrl === null) return;
   const addedBy = window.prompt("Added by", item.addedBy);
   if (addedBy === null) return;
