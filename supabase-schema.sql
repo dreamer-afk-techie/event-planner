@@ -292,4 +292,40 @@ $$;
 revoke all on function public.reorder_performances(uuid, jsonb) from public;
 grant execute on function public.reorder_performances(uuid, jsonb) to authenticated;
 
+create or replace function public.reorder_performances_v2(p_event_id uuid, p_updates jsonb)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  changed_count integer;
+begin
+  if auth.uid() is null or not public.is_event_member(p_event_id) then
+    raise exception 'You do not have access to reorder this event.';
+  end if;
+
+  if jsonb_typeof(p_updates) <> 'array' or jsonb_array_length(p_updates) = 0 then
+    raise exception 'At least one performance is required.';
+  end if;
+
+  update public.performances as performance
+  set
+    display_order = coalesce(nullif(update_item ->> 'displayOrder', '')::bigint, performance.display_order),
+    group_order = coalesce(nullif(update_item ->> 'groupOrder', '')::bigint, performance.group_order)
+  from jsonb_array_elements(p_updates) as update_item
+  where performance.id = (update_item ->> 'performanceId')::uuid
+    and performance.event_id = p_event_id;
+
+  get diagnostics changed_count = row_count;
+  if changed_count <> jsonb_array_length(p_updates) then
+    raise exception 'Unable to update every requested performance.';
+  end if;
+  return changed_count;
+end;
+$$;
+
+revoke all on function public.reorder_performances_v2(uuid, jsonb) from public;
+grant execute on function public.reorder_performances_v2(uuid, jsonb) to authenticated;
+
 notify pgrst, 'reload schema';

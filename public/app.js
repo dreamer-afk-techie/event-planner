@@ -305,10 +305,11 @@ async function supabaseApi(path, payload) {
     const updates = payload.updates || [];
     if (!Array.isArray(updates) || updates.length === 0) throw new Error("No ordering changes were provided.");
     try {
-      await supabaseRequest("rpc/reorder_performances", {
+      const changed = await supabaseRequest("rpc/reorder_performances_v2", {
         method: "POST",
         body: JSON.stringify({ p_event_id: payload.eventId, p_updates: updates }),
       });
+      if (Number(changed) !== updates.length) throw new Error("The ordering update was incomplete.");
     } catch (rpcError) {
       try {
         for (const update of updates) {
